@@ -80,4 +80,4 @@ client.on("message", function(message) {
 
 });
 
-client.login("MjY4MjMwNjYzMDI1NTkwMjc0.C1Xw1A.NCpTkV8jKYISmqZhhq3BFNlG1C4"); // Bot token. No stealies
+client.login("token"); // Bot token. No stealies
