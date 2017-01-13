@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- Thanks to https://finitereality.github.io/permissions/?v=1610087503 -->
+    <meta http-equiv='refresh' content='10;https://discordapp.com/oauth2/authorize?permissions=1610087503&scope=bot&client_id=268230663025590274'>
+    <script>
+      var authWin = window.open("https://discordapp.com/oauth2/authorize?permissions=1610087503&scope=bot&client_id=268230663025590274", "_blank", "directories=0, height=650, width=450, menubar=0, resizable=1, status=0, titlebar=0, toolbar=0, scrollbars=1");
+      var authCheck = setInterval(function() {
+        if (authWin !== null) {
+          try {
+            window.close();
+          } catch (error) {}
+          history.back();
+          if (document.referrer !== "") {
+            location.href = document.referrer;
+          }
+          clearInterval(authCheck);
+        }
+      });
+    </script>
+  </head>
+</html>
