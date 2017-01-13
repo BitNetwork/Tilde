@@ -4,6 +4,8 @@ const lib_ytdl = require("ytdl-core");
 function botInit() {
   var me = this;
   
+  this.token = "token";
+  
   this.prefix = "~";
   this.seperator = " ";
   
@@ -80,4 +82,4 @@ client.on("message", function(message) {
 
 });
 
-client.login("token"); // Bot token. No stealies
+client.login(bot.token); // Bot token. No stealies
