@@ -126,12 +126,13 @@ function botInit() { // Just make this one huge function... add the callback and
           message.channel.sendMessage("There's no music playing.");
           return;
         }
+
         lib_ytdl.getInfo(data.bin.playingMusic, function(error, info) {
           if (error) {
             message.channel.sendMessage("Error getting details.");
             return;
           }
-          //console.log(info);
+
           var embed = new lib_discord.RichEmbed();
           embed.setColor("#ff0000");
           embed.setTitle(info.title);
@@ -161,6 +162,28 @@ function botInit() { // Just make this one huge function... add the callback and
           embed.setFooter("This is user generated content. We don't endorse anything listed here");
           message.channel.sendEmbed(embed);
         });
+      }
+    },
+    volume: {
+      name: "volume",
+      runtime: function(message, client, data) {
+        if (processCommand(message.content).params.length === 0) {
+          message.channel.sendMessage("```" + me.prefix + "volume [relative 1-10 | decibels dB]\n\nAdjusts the volume of the current music.```");
+          return;
+        }
+
+        if (typeof data.bin.voiceDispatcher === "undefined") {
+          message.channel.sendMessage("There's no music playing.");
+          return;
+        }
+
+        var volume = Math.round(parseInt(processCommand(message.content).params[0] - 4));
+        if (volume < 1 || volume > 10) {
+          message.channel.sendMessage("That number isn't on my dial.");
+          return;
+        }
+        data.bin.musicVolume = volume;
+        data.bin.voiceDispatcher.setVolume(volume - 4);
       }
     },
     pause: {
