@@ -31,6 +31,10 @@ function botInit() {
     echo: {
       name: "echo",
       runtime: function(message, client) {
+        if (processCommand(message.content).params.length === 0) {
+          message.channel.sendMessage("```" + me.prefix + "echo [text]\n\nEchos text back to chat.```");
+          return;
+        }
         console.log(processCommand(message.content));
         message.channel.send(processCommand(message.content).params.join(me.seperator));
       }
@@ -44,6 +48,10 @@ function botInit() {
     game: {
       name: "game",
       runtime: function(message, client) {
+        if (processCommand(message.content).params.length === 0) {
+          message.channel.sendMessage("```" + me.prefix + "game [game]\n\nChanges the current game for this bot.```");
+          return;
+        }
         client.user.setGame(processCommand(message.content).params.join(me.seperator));
       }
     },
@@ -54,6 +62,7 @@ function botInit() {
           message.channel.sendMessage(makeMention(message.author.id) + " You don't appear to be in a voice channel.");
           return;
         }
+        
         message.member.voiceChannel.join().then(function(connection) {
           data.bin.voiceChannel = connection;
         });
