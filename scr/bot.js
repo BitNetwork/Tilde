@@ -73,6 +73,7 @@ function botInit() { // Just make this one huge function... add the callback and
       runtime: function(message, client, data) {
         if (typeof data.bin.voiceDispatcher !== "undefined") {
           data.bin.voiceDispatcher.resume();
+          message.channel.sendMessage("Music resumed.");
           return;
         }
 
@@ -99,6 +100,10 @@ function botInit() { // Just make this one huge function... add the callback and
             return;
           }
 
+          if (typeof data.bin.musicVolume === "undefined") {
+            data.bin.musicVolume = 1;
+          }
+
           data.bin.playingMusic = url;
           lib_ytdl.getInfo(url, function(error, info) {
             if (error) {
@@ -106,10 +111,11 @@ function botInit() { // Just make this one huge function... add the callback and
               return;
             }
 
-            var stream = lib_ytdl(url, {filter: "audioonly"}, function() {console.log("stream ready")});
+            var stream = lib_ytdl(url, {filter: "audioonly"});
             message.channel.sendMessage("Playing music...");
+
             setTimeout(function(stream) {
-              data.bin.voiceDispatcher = connection.playStream(stream, {seek: 0, volume: 1});
+              data.bin.voiceDispatcher = connection.playStream(stream, {seek: 0, volume: data.bin.musicVolume});
               data.bin.voiceDispatcher.on("end", function() {
                 data.bin.playingMusic = null;
                 data.bin.voiceDispatcher = undefined;
@@ -159,7 +165,6 @@ function botInit() { // Just make this one huge function... add the callback and
           }
           embed.addField("Length", (hours > 0 ? hours + " hour" + (hours > 1 ? "s" : "") : "") + " " + (minutes > 0 ? minutes + " minute" + (minutes > 1 ? "s" : "") : "") + " " + (seconds > 0 ? seconds + " second" + (seconds > 1 ? "s" : "") : ""), true);
           embed.addField("Views", info.view_count, true);
-          embed.setFooter("This is user generated content. We don't endorse anything listed here");
           message.channel.sendEmbed(embed);
         });
       }
@@ -168,7 +173,7 @@ function botInit() { // Just make this one huge function... add the callback and
       name: "volume",
       runtime: function(message, client, data) {
         if (processCommand(message.content).params.length === 0) {
-          message.channel.sendMessage("```" + me.prefix + "volume [relative 1-10 | decibels dB]\n\nAdjusts the volume of the current music.```");
+          message.channel.sendMessage("```" + me.prefix + "volume [dial | percent] [1-10 | 0-200]\n\nAdjusts the volume of the current music.```");
           return;
         }
 
@@ -177,23 +182,103 @@ function botInit() { // Just make this one huge function... add the callback and
           return;
         }
 
-        var volume = Math.round(parseInt(processCommand(message.content).params[0] - 4));
-        if (volume < 1 || volume > 10) {
-          message.channel.sendMessage("That number isn't on my dial.");
-          return;
+        var amount = 0;
+        if (!isNaN(parseInt(processCommand(message.content).params[0])) || (processCommand(message.content).params[0] === "dial" && processCommand(message.content).params.length > 1)) {
+          if (!isNaN(parseInt(processCommand(message.content).params[0]))) {
+            amount = Math.round(parseInt(processCommand(message.content).params[0]));
+          } else {
+            amount = Math.round(parseInt(processCommand(message.content).params[1]));
+          }
+
+          if (isNaN(amount)) {
+            message.channel.sendMessage("```" + me.prefix + "volume [dial | percent] [1-10 | 0-200]\n\nAdjusts the volume of the current music.```");
+            return;
+          }
+
+          if (amount < 1 || amount > 10) {
+            message.channel.sendMessage("That number isn't on my dial.");
+            return;
+          }
+
+          if (data.bin.musicMuted === true) {
+            message.channel.sendMessage("I'm muted, you need to unmute me first.");
+            return;
+          }
+
+          data.bin.musicVolume = amount * 0.2;
+          data.bin.voiceDispatcher.setVolume(amount * 0.2);
+          message.channel.sendMessage("Set the dial to " + amount + ".");
+        } else if (processCommand(message.content).params[0] === "percent" && processCommand(message.content).params.length > 1) {
+          amount = Math.round(parseInt(processCommand(message.content).params[1]));
+          if (isNaN(amount)) {
+            message.channel.sendMessage("```" + me.prefix + "volume [dial | percent] [1-10 | 0-200]\n\nAdjusts the volume of the current music.```");
+            return;
+          }
+
+          if (amount < 1 || amount > 200) {
+            message.channel.sendMessage("That number is too loud.");
+            return;
+          }
+
+          if (data.bin.musicMuted === true) {
+            message.channel.sendMessage("I'm muted, you need to unmute me first.");
+            return;
+          }
+
+          data.bin.musicVolume = amount / 100;
+          data.bin.voiceDispatcher.setVolume(amount / 100);
+          message.channel.sendMessage("Set the gain to " + amount + "%.");
+        } else {
+          message.channel.sendMessage("```" + me.prefix + "volume [dial | percent] [1-10 | 0-200]\n\nAdjusts the volume of the current music.```");
         }
-        data.bin.musicVolume = volume;
-        data.bin.voiceDispatcher.setVolume(volume - 4);
+        console.log(typeof parseInt(processCommand(message.content).params[0]));
       }
     },
-    pause: {
-      name: "pause",
+    mute: {
+      name: "mute",
       runtime: function(message, client, data) {
         if (typeof data.bin.voiceDispatcher === "undefined") {
           message.channel.sendMessage("There's no music playing.");
           return;
         }
+
+        if (data.bin.musicMuted === true) {
+          message.channel.sendMessage("I'm already muted.");
+          return;
+        }
+
+        data.bin.musicMuted = true;
+        data.bin.voiceDispatcher.setVolume(0);
+        message.channel.sendMessage("Muted the music.");
+      }
+    },
+    unmute: {
+      name: "unmute",
+      runtime: function(message, client, data) {
+        if (typeof data.bin.voiceDispatcher === "undefined") {
+          message.channel.sendMessage("There's no music playing.");
+          return;
+        }
+
+        if (data.bin.musicMuted === false || typeof data.bin.musicMuted === "undefined") {
+          message.channel.sendMessage("I'm not muted.");
+          return;
+        }
+
+        data.bin.musicMuted = false;
+        data.bin.voiceDispatcher.setVolume(data.bin.musicVolume);
+        message.channel.sendMessage("Unmuted the music.");
+      }
+    },
+    pause: {
+      name: "pause",
+      runtime: function(message, client, data) {
+        if (typeof data.bin.voiceDispatcher === "undefined" || data.bin.voiceDispatcher.paused) {
+          message.channel.sendMessage("There's no music playing.");
+          return;
+        }
         data.bin.voiceDispatcher.pause();
+        message.channel.sendMessage("Music paused.");
       }
     },
     stop: {
@@ -206,6 +291,7 @@ function botInit() { // Just make this one huge function... add the callback and
         data.bin.playingMusic = null;
         data.bin.voiceDispatcher.end();
         data.bin.voiceDispatcher = undefined;
+        message.channel.sendMessage("Music stopped.");
       }
     },
     leave: {
@@ -220,6 +306,7 @@ function botInit() { // Just make this one huge function... add the callback and
         data.bin.voiceDispatcher = undefined;
         data.bin.voiceChannel.disconnect();
         data.bin.voiceChannel = undefined;
+        message.channel.sendMessage("I left the voice channel.");
       }
     }
   };
