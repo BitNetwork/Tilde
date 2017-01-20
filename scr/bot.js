@@ -1,7 +1,7 @@
 const lib_discord = require("discord.js");
 const lib_ytdl = require("ytdl-core");
 
-function botInit() { // Just make this one huge function... add the callback and the discord stuff in here.
+function botInit() {
   var me = this;
 
   this.token = "token";
@@ -24,19 +24,21 @@ function botInit() { // Just make this one huge function... add the callback and
   this.commands = {
     debug: {
       name: "debug",
-      runtime: function(message, client) {
-        message.reply("???");
+      startup: function(client, data) {
+        data.bin.asdf = "It kinda worked!";
+      },
+      runtime: function(message, client, data) {
+        message.reply(data.bin.asdf);
       }
     },
     echo: {
       name: "echo",
       runtime: function(message, client) {
-        if (processCommand(message.content).params.length === 0) {
+        if (processCommand(message.content).params.length < 1) {
           message.channel.sendMessage("```" + me.prefix + "echo [text]\n\nEchos text back to chat.```");
           return;
         }
-        console.log(processCommand(message.content));
-        message.channel.send(processCommand(message.content).params.join(me.seperator));
+        message.channel.sendMessage(processCommand(message.content).params.join(me.seperator));
       }
     },
     ping: {
@@ -55,6 +57,17 @@ function botInit() { // Just make this one huge function... add the callback and
         client.user.setGame(processCommand(message.content).params.join(me.seperator));
       }
     },
+    music: {
+      name: "music",
+      startup: function(client, data) {
+        data.bin.voiceChannel = null;
+        data.bin.voiceDispatcher = null;
+        data.bin.musicState = 0; // 0 = stopped, 1 = playing, 2 = paused
+        data.bin.musicVolume = 1;
+        data.bin.musicMuted = false;
+        data.bin.playingMusic = null;
+      }
+    },
     join: {
       name: "join",
       runtime: function(message, client, data) {
@@ -71,9 +84,15 @@ function botInit() { // Just make this one huge function... add the callback and
     play: {
       name: "play",
       runtime: function(message, client, data) {
-        if (typeof data.bin.voiceDispatcher !== "undefined") {
+        if (data.bin.musicState === 2) {
           data.bin.voiceDispatcher.resume();
+          data.bin.musicState = 1;
           message.channel.sendMessage("Music resumed.");
+          return;
+        }
+
+        if (data.bin.musicState !== 0) {
+          message.channel.sendMessage("There's already something playing.");
           return;
         }
 
@@ -88,20 +107,17 @@ function botInit() { // Just make this one huge function... add the callback and
         }
 
         message.member.voiceChannel.join().then(function(connection) {
-          //Get info with http://stackoverflow.com/q/38810536/3434588
+          // Get info with http://stackoverflow.com/q/38810536/3434588
           data.bin.voiceChannel = connection;
 
+          var command = processCommand(message.content);
           var url = "";
           var youtubeUrlRegex = /^(?:http(?:s)?:\/\/)?(?:www\.)?(?:(?:youtube.com(?:(?::80)|(?::443))?\/watch\?v=)|(?:youtu.be(?:(?::80)|(?::443))?\/))([\w\d_-]{8,13})/;
-          if (processCommand(message.content).params.length > 0 && processCommand(message.content).params[0].match(youtubeUrlRegex) !== null && processCommand(message.content).params[0].match(youtubeUrlRegex).length > 1) {
-            url = "https://www.youtube.com/watch?v=" + processCommand(message.content).params[0].match(youtubeUrlRegex)[1];
+          if (command.params.length > 0 && command.params[0].match(youtubeUrlRegex) !== null && command.params[0].match(youtubeUrlRegex).length > 1) {
+            url = "https://www.youtube.com/watch?v=" + command.params[0].match(youtubeUrlRegex)[1];
           } else {
             message.channel.sendMessage("Music not found.");
             return;
-          }
-
-          if (typeof data.bin.musicVolume === "undefined") {
-            data.bin.musicVolume = 1;
           }
 
           data.bin.playingMusic = url;
@@ -115,8 +131,12 @@ function botInit() { // Just make this one huge function... add the callback and
             message.channel.sendMessage("Playing music...");
 
             setTimeout(function(stream) {
-              data.bin.voiceDispatcher = connection.playStream(stream, {seek: 0, volume: data.bin.musicVolume});
+              data.bin.voiceDispatcher = connection.playStream(stream, {volume: data.bin.musicVolume});
+              data.bin.voiceDispatcher.on("start", function() {
+                data.bin.musicState = 1;
+              });
               data.bin.voiceDispatcher.on("end", function() {
+                data.bin.musicState = 0;
                 data.bin.playingMusic = null;
                 data.bin.voiceDispatcher = undefined;
               });
@@ -128,7 +148,7 @@ function botInit() { // Just make this one huge function... add the callback and
     song: {
       name: "song",
       runtime: function(message, client, data) {
-        if (typeof data.bin.voiceDispatcher === "undefined" || data.bin.playingMusic === null) {
+        if (data.bin.musicState === 0) {
           message.channel.sendMessage("There's no music playing.");
           return;
         }
@@ -140,7 +160,7 @@ function botInit() { // Just make this one huge function... add the callback and
           }
 
           var embed = new lib_discord.RichEmbed();
-          embed.setColor("#ff0000");
+          embed.setColor("#ff0000"); // Red... like YouTube ;)
           embed.setTitle(info.title);
           embed.setAuthor(info.author);
           embed.setImage(info.iurl);
@@ -172,12 +192,13 @@ function botInit() { // Just make this one huge function... add the callback and
     volume: {
       name: "volume",
       runtime: function(message, client, data) {
-        if (processCommand(message.content).params.length === 0) {
+        var command = processCommand(message.content);
+        if (command.params.length === 0) {
           message.channel.sendMessage("```" + me.prefix + "volume [dial | percent] [1-10 | 0-200]\n\nAdjusts the volume of the current music.```");
           return;
         }
 
-        if (typeof data.bin.voiceDispatcher === "undefined") {
+        if (data.bin.musicState === 0) {
           message.channel.sendMessage("There's no music playing.");
           return;
         }
@@ -231,19 +252,18 @@ function botInit() { // Just make this one huge function... add the callback and
         } else {
           message.channel.sendMessage("```" + me.prefix + "volume [dial | percent] [1-10 | 0-200]\n\nAdjusts the volume of the current music.```");
         }
-        console.log(typeof parseInt(processCommand(message.content).params[0]));
       }
     },
     mute: {
       name: "mute",
       runtime: function(message, client, data) {
-        if (typeof data.bin.voiceDispatcher === "undefined") {
+        if (data.bin.musicState === 0) {
           message.channel.sendMessage("There's no music playing.");
           return;
         }
 
         if (data.bin.musicMuted === true) {
-          message.channel.sendMessage("I'm already muted.");
+          message.channel.sendMessage("The music is already muted.");
           return;
         }
 
@@ -255,13 +275,13 @@ function botInit() { // Just make this one huge function... add the callback and
     unmute: {
       name: "unmute",
       runtime: function(message, client, data) {
-        if (typeof data.bin.voiceDispatcher === "undefined") {
+        if (data.bin.musicState === 0) {
           message.channel.sendMessage("There's no music playing.");
           return;
         }
 
-        if (data.bin.musicMuted === false || typeof data.bin.musicMuted === "undefined") {
-          message.channel.sendMessage("I'm not muted.");
+        if (data.bin.musicMuted === false) {
+          message.channel.sendMessage("The music is not muted.");
           return;
         }
 
@@ -273,24 +293,32 @@ function botInit() { // Just make this one huge function... add the callback and
     pause: {
       name: "pause",
       runtime: function(message, client, data) {
-        if (typeof data.bin.voiceDispatcher === "undefined" || data.bin.voiceDispatcher.paused) {
+        if (data.bin.musicState === 0) {
           message.channel.sendMessage("There's no music playing.");
           return;
         }
+
+        if (data.bin.musicState === 2) {
+          message.channel.sendMessage("The music is already paused.");
+          return;
+        }
+
         data.bin.voiceDispatcher.pause();
+        data.bin.musicState = 2;
         message.channel.sendMessage("Music paused.");
       }
     },
     stop: {
       name: "stop",
       runtime: function(message, client, data) {
-        if (typeof data.bin.voiceDispatcher === "undefined") {
+        if (data.bin.musicState === 0) {
           message.channel.sendMessage("There's no music playing.");
           return;
         }
         data.bin.playingMusic = null;
         data.bin.voiceDispatcher.end();
         data.bin.voiceDispatcher = undefined;
+        data.bin.musicState = 0;
         message.channel.sendMessage("Music stopped.");
       }
     },
@@ -306,47 +334,62 @@ function botInit() { // Just make this one huge function... add the callback and
         data.bin.voiceDispatcher = undefined;
         data.bin.voiceChannel.disconnect();
         data.bin.voiceChannel = undefined;
+        data.bin.musicState = 0;
         message.channel.sendMessage("I left the voice channel.");
       }
     }
   };
+
+  var client = new lib_discord.Client();
+
+  client.on("ready", function() {
+    console.log("Server ready!");
+
+    client.user.setGame("Discord");
+
+    var startupCommands = [];
+    for (var key in me.commands) {
+      if (typeof me.commands[key].startup === "function") {
+        startupCommands.push(me.commands[key].startup);
+      }
+    }
+
+    client.guilds.forEach(function(guild) {
+      me.guild[guild.id] = {
+        bin: {},
+        data: {}
+      };
+
+      for (var i=0; i<startupCommands.length; i++) {
+        startupCommands[i](client, me.guild[guild.id]);
+      }
+    });
+  });
+
+
+  client.on("message", function(message) {
+
+    // Logging messages for debugging
+    var header = (typeof message.channel.guild === "object" ? message.channel.guild.name + "/" + message.channel.name : "DM") + ", " + message.author.username + "#" + message.author.discriminator + ": ";
+    console.log(header + message.content.replace(/\n/g, "\n" + " ".repeat(header.length)));
+
+    if (message.content.substring(0, me.prefix.length) !== me.prefix || message.author.id === client.user.id || message.author.bot || typeof message.channel.guild !== "object") {
+      return;
+    }
+
+    var command = message.content.substring(me.prefix.length).split(me.seperator)[0];
+    var params = message.content.split(me.seperator).slice(1);
+
+    for (var key in me.commands) {
+      if (me.commands[key].name === command && typeof me.commands[key].runtime === "function") {
+        me.commands[command].runtime(message, client, me.guild[message.channel.guild.id]);
+      }
+    }
+
+  });
+
+  client.login(me.token); // Bot token. No stealies
+
 }
 
 var bot = new botInit();
-var client = new lib_discord.Client();
-
-client.on("ready", function() {
-  console.log("Server ready!");
-  client.user.setGame("Discord");
-});
-
-
-client.on("message", function(message) {
-
-  // Logging messages for debugging
-  var header = (typeof message.channel.guild === "object" ? message.channel.guild.name : "DM") + "/" + message.channel.name + ", " + message.author.username + "#" + message.author.discriminator + ": ";
-  console.log(header + message.content.replace(/\n/g, "\n" + " ".repeat(header.length)));
-
-  if (message.content.substring(0, bot.prefix.length) !== bot.prefix || message.author.id === client.user.id || message.author.bot || typeof message.channel.guild !== "object") {
-    return;
-  }
-
-  if (typeof bot.guild[message.channel.guild.id] === "undefined") {
-    bot.guild[message.channel.guild.id] = {
-      bin: {},
-      data: {}
-    };
-  }
-
-  var command = message.content.substring(bot.prefix.length).split(bot.seperator)[0];
-  var params = message.content.split(bot.seperator).slice(1);
-
-  for (var key in bot.commands) {
-    if (bot.commands[key].name === command && typeof bot.commands[key].runtime === "function") {
-      bot.commands[command].runtime(message, client, bot.guild[message.channel.guild.id]);
-    }
-  }
-
-});
-
-client.login(bot.token); // Bot token. No stealies
