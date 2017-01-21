@@ -13,12 +13,16 @@ function botInit() {
 
   function processCommand(commandText) {
     var command = commandText.substring(me.prefix.length).split(me.seperator)[0];
-    var params = commandText.split(me.seperator).slice(1);
+    var params = commandText.substring(me.prefix.length + command.length).split(me.seperator).slice(1);
     return {command: command, params: params};
   }
 
   function makeMention(id) {
     return "<@" + id + ">";
+  }
+
+  function parseMention(mention) {
+    return mention.match(/^<@!?(\d+)>$/) !== null ? mention.match(/^<@!?(\d+)>$/)[1] : null;
   }
 
   this.commands = {
@@ -39,6 +43,31 @@ function botInit() {
           return;
         }
         message.channel.sendMessage(processCommand(message.content).params.join(me.seperator));
+      }
+    },
+    tts: {
+      name: "tts",
+      runtime: function(message, client) {
+        if (processCommand(message.content).params.length < 1) {
+          message.channel.sendMessage("```" + me.prefix + "tts [text]\n\nSpeaks text back to chat using text-to-speech.```");
+          return;
+        }
+        message.channel.sendMessage(processCommand(message.content).params.join(me.seperator), {tts: true});
+      }
+    },
+    react: {
+      name: "react",
+      runtime: function(message, client) {
+        var command = processCommand(message.content);
+        if (command.params.length < 2) {
+          message.channel.sendMessage("```" + me.prefix + "react [messageid] [emoji]\n\nReacts to a message using an emoji.```");
+          return;
+        }
+        message.channel.fetchMessage(command.params[0]).then(function(message) {
+          message.react(command.params[1]);
+        }).catch(function(error) {
+          message.channel.sendMessage("Message not found.");
+        });
       }
     },
     ping: {
@@ -123,7 +152,7 @@ function botInit() {
         me.commands[command] = commands[command];
       }
 
-      console.log("[Info] Mod <" + me.config.mods + "> successfully loaded.");
+      console.log("[Info] Mod <" + me.config.mods[i] + "> successfully loaded.");
     }
   }
 
