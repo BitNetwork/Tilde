@@ -280,15 +280,17 @@
   leave: {
     name: "leave",
     runtime: function(message, client, data) {
-      if (typeof data.bin.voiceChannel === "undefined") {
+      if (data.bin.voiceChannel === null) {
         message.channel.sendMessage("I'm not in a voice channel.");
         return;
       }
       data.bin.playingMusic = null;
-      data.bin.voiceDispatcher.end();
-      data.bin.voiceDispatcher = undefined;
+      if (data.bin.voiceDispatcher !== null) {
+        data.bin.voiceDispatcher.end();
+        data.bin.voiceDispatcher = null;
+      }
       data.bin.voiceChannel.disconnect();
-      data.bin.voiceChannel = undefined;
+      data.bin.voiceChannel = null;
       data.bin.musicState = 0;
       message.channel.sendMessage("I left the voice channel.");
     }
