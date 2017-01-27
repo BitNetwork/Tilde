@@ -141,7 +141,7 @@
     name: "volume",
     runtime: function(message, client, data) {
       function help() {
-        message.channel.sendMessage("```" + me.prefix + "volume [dial | percent] [1-10 | 0-200]\n\nAdjusts the volume of the current music.```");
+        message.channel.sendMessage("```" + me.prefix + "volume [dial | gain] [1-10 | 0-200]\n\nAdjusts the volume of the current music.```");
       }
 
       var command = processCommand(message.content);
@@ -188,7 +188,7 @@
         data.bin.musicVolume = amount * 0.2;
         data.bin.voiceDispatcher.setVolume(amount * 0.2);
         message.channel.sendMessage("Set the dial to " + amount + ".");
-      } else if (command.params[0] === "percent" && command.params.length > 1 && command.params[1].match(/^\d+$/) !== null) {
+      } else if (command.params[0] === "gain" && command.params.length > 1 && command.params[1].match(/^\d+$/) !== null) {
         amount = Math.round(parseInt(command.params[1]));
 
         if (amount < 1 || amount > 200) {
