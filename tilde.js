@@ -17,6 +17,14 @@ function botInit() {
     return {command: command, params: params};
   }
 
+  /*function callListener(listener) {
+    for (var key in me.commands) {
+      if (typeof me.commands[key][listener] === "function") {
+        me.commands[key][listener](client, me.guild[message.channel.guild.id]);
+      }
+    }
+  }*/
+
   function makeMention(id) {
     return "<@" + id + ">";
   }
@@ -137,14 +145,14 @@ function botInit() {
       try {
         var data = lib_fs.readFileSync(me.config.mods[i], {encoding: "utf8"});
       } catch (error) {
-        console.log("[Error] Error reading mod <" + me.config.mods + ">. Mod not loaded.");
+        console.log("[Error] Error reading mod <" + me.config.mods[i] + ">. Mod not loaded.");
         return;
       }
 
       try {
         var commands = eval("new Object(" + data + ");");
       } catch (error) {
-        console.log("[Error] Error loading mod <" + me.config.mods + ">. Mod not loaded.");
+        console.log("[Error] Error loading mod <" + me.config.mods[i] + ">. Mod not loaded.");
         return;
       }
 
@@ -193,12 +201,13 @@ function botInit() {
       return;
     }
 
-    var command = message.content.substring(me.prefix.length).split(me.seperator)[0];
-    var params = message.content.split(me.seperator).slice(1);
+    var command = processCommand(message.content);
+    // var command = message.content.substring(me.prefix.length).split(me.seperator)[0];
+    // var params = message.content.split(me.seperator).slice(1);
 
     for (var key in me.commands) {
-      if (me.commands[key].name === command && typeof me.commands[key].runtime === "function") {
-        me.commands[command].runtime(message, client, me.guild[message.channel.guild.id]);
+      if (me.commands[key].name === command.command && typeof me.commands[key].runtime === "function") {
+        me.commands[key].runtime(message, client, me.guild[message.channel.guild.id]);
       }
     }
 
