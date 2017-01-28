@@ -126,16 +126,21 @@
   clear: {
     name: "clear",
     runtime: function(message, client) {
+      function help() {
+        message.channel.sendMessage("```" + me.prefix + "clear [amount 1-100]\n\nClears recent messages from a channel.```");
+      }
       var command = processCommand(message.content);
       if (command.params.length < 1) {
-        message.channel.sendMessage("```" + me.prefix + "clear [amount]\n\nClears recent messages from a channel.```");
+        help();
         return;
       }
 
       var amount = 10;
-      if (command.params[0].match(/^\d*$/) !== null) {
-        amount = parseInt(command.params[0]);
+      if (command.params[0].match(/^\d*$/) === null) {
+        help();
+        return;
       }
+      amount = parseInt(command.params[0]);
 
       if (amount > 100) {
         message.channel.sendMessage("I can't delete that many messages.");
@@ -165,12 +170,14 @@
         return;
       }
 
-      //var role = message.guild.roles.find("name", command.params[1]);
       var role = message.guild.roles.get(parseRoleMention(command.params[1]));
-      console.log(role);
       if (typeof role === "undefined") {
-        message.channel.sendMessage("Role not found.");
-        return;
+        if (command.params[1] === "@everyone") {
+          role = message.guild.roles.find("name", command.params[1]);
+        } else {
+          message.channel.sendMessage("Role not found.");
+          return;
+        }
       }
 
       data.bin.perm[target.name] = role.id;
