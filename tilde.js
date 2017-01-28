@@ -1,6 +1,7 @@
 const lib_discord = require("discord.js");
 const lib_ytdl = require("ytdl-core");
 const lib_fs = require("fs");
+const lib_readline = require("readline");
 
 function botInit() {
   var me = this;
@@ -198,22 +199,13 @@ function botInit() {
 
     me.client.user.setGame("Discord");
 
-    var startupCommands = [];
-    for (var key in me.commands) {
-      if (typeof me.commands[key].startup === "function") {
-        startupCommands.push(me.commands[key].startup);
-      }
-    }
-
     me.client.guilds.forEach(function(guild) {
       me.data[guild.id] = {
         bin: {},
         data: {}
       };
 
-      for (var i=0; i<startupCommands.length; i++) {
-        startupCommands[i](me.client, me.data[guild.id]);
-      }
+      callListener("startup", guild);
     });
   });
 
@@ -237,8 +229,28 @@ function botInit() {
 
   });
 
-  me.client.login(me.token); // Bot token. No stealies
+  me.client.on("guildCreate", function(guild) {
+    me.data[guild.id] = {
+      bin: {},
+      data: {}
+    };
 
+  });
+
+  me.client.login(me.token); // Bot token. No stealies
 }
 
 var bot = new botInit();
+
+const readline = lib_readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
+
+readline.on("line", function(line) {
+  try {
+    console.log(eval(line));
+  } catch (error) {
+    console.log(error);
+  }
+});
