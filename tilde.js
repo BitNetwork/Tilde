@@ -9,7 +9,7 @@ function botInit() {
   this.prefix = "~";
   this.seperator = " ";
   this.config = {};
-  this.guild = {};
+  this.data = {};
 
   function processCommand(commandText) {
     var command = commandText.substring(me.prefix.length).split(me.seperator)[0];
@@ -17,13 +17,28 @@ function botInit() {
     return {command: command, params: params};
   }
 
-  /*function callListener(listener) {
+  function findCommand(commandName) {
     for (var key in me.commands) {
-      if (typeof me.commands[key][listener] === "function") {
-        me.commands[key][listener](client, me.guild[message.channel.guild.id]);
+      if (me.commands[key].name === commandName) {
+        return me.commands[key];
       }
     }
-  }*/
+    return null;
+  }
+
+  function callListener(listener, guild, message) {
+    var results = [];
+    for (var key in me.commands) {
+      if (typeof me.commands[key][listener] === "function") {
+        if (typeof message !== "undefined") {
+          results.push(me.commands[key][listener](message, me.client, me.data[guild.id]));
+        } else {
+          results.push(me.commands[key][listener](me.client, me.data[guild.id]));
+        }
+      }
+    }
+    return results;
+  }
 
   function makeMention(id) {
     return "<@" + id + ">";
@@ -33,34 +48,43 @@ function botInit() {
     return mention.match(/^<@!?(\d+)>$/) !== null ? mention.match(/^<@!?(\d+)>$/)[1] : null;
   }
 
+  function makeRoleMention(id) {
+    return "<@&" + id + ">";
+  }
+
+  function parseRoleMention(mention) {
+    return mention.match(/^<@&(\d+)>$/) !== null ? mention.match(/^<@&(\d+)>$/)[1] : null;
+  }
+
+  function makeChannelMention(id) {
+    return "<#" + id + ">";
+  }
+
+  function parseChannelMention(mention) {
+    return mention.match(/^<#(\d+)>$/) !== null ? mention.match(/^<#(\d+)>$/)[1] : null;
+  }
+
   this.commands = {
-    debug: {
-      name: "debug",
-      startup: function(client, data) {
-        data.bin.asdf = "It kinda worked!";
-      },
-      runtime: function(message, client, data) {
-        message.reply(data.bin.asdf);
-      }
-    },
     echo: {
       name: "echo",
       runtime: function(message, client) {
-        if (processCommand(message.content).params.length < 1) {
+        var command = processCommand(message.content);
+        if (command.params.length < 1) {
           message.channel.sendMessage("```" + me.prefix + "echo [text]\n\nEchos text back to chat.```");
           return;
         }
-        message.channel.sendMessage(processCommand(message.content).params.join(me.seperator));
+        message.channel.sendMessage(command.params.join(me.seperator));
       }
     },
     tts: {
       name: "tts",
       runtime: function(message, client) {
-        if (processCommand(message.content).params.length < 1) {
+        var command = processCommand(message.content);
+        if (command.params.length < 1) {
           message.channel.sendMessage("```" + me.prefix + "tts [text]\n\nSpeaks text back to chat using text-to-speech.```");
           return;
         }
-        message.channel.sendMessage(processCommand(message.content).params.join(me.seperator), {tts: true});
+        message.channel.sendMessage(command.params.join(me.seperator), {tts: true});
       }
     },
     react: {
@@ -84,14 +108,17 @@ function botInit() {
         message.channel.sendMessage("Pong!");
       }
     },
-    game: {
-      name: "game",
+    embed: {
+      name: "embed",
       runtime: function(message, client) {
-        if (processCommand(message.content).params.length === 0) {
-          message.channel.sendMessage("```" + me.prefix + "game [game]\n\nChanges the current game for this bot.```");
+        var command = processCommand(message.content);
+        if (command.params.length < 1) {
+          message.channel.sendMessage("```" + me.prefix + "embed [text]\n\nCreates an embed with the given text.```");
           return;
         }
-        client.user.setGame(processCommand(message.content).params.join(me.seperator));
+        var embed = new lib_discord.RichEmbed();
+        embed.setDescription(command.params.join(me.seperator));
+        message.channel.sendEmbed(embed);
       }
     }
   };
@@ -146,14 +173,14 @@ function botInit() {
         var data = lib_fs.readFileSync(me.config.mods[i], {encoding: "utf8"});
       } catch (error) {
         console.log("[Error] Error reading mod <" + me.config.mods[i] + ">. Mod not loaded.");
-        return;
+        break;
       }
 
       try {
         var commands = eval("new Object(" + data + ");");
       } catch (error) {
         console.log("[Error] Error loading mod <" + me.config.mods[i] + ">. Mod not loaded.");
-        return;
+        break;
       }
 
       for (var command in commands) {
@@ -164,12 +191,12 @@ function botInit() {
     }
   }
 
-  var client = new lib_discord.Client();
+  me.client = new lib_discord.Client();
 
-  client.on("ready", function() {
+  me.client.on("ready", function() {
     console.log("[Info] Server ready!");
 
-    client.user.setGame("Discord");
+    me.client.user.setGame("Discord");
 
     var startupCommands = [];
     for (var key in me.commands) {
@@ -178,42 +205,39 @@ function botInit() {
       }
     }
 
-    client.guilds.forEach(function(guild) {
-      me.guild[guild.id] = {
+    me.client.guilds.forEach(function(guild) {
+      me.data[guild.id] = {
         bin: {},
         data: {}
       };
 
       for (var i=0; i<startupCommands.length; i++) {
-        startupCommands[i](client, me.guild[guild.id]);
+        startupCommands[i](me.client, me.data[guild.id]);
       }
     });
   });
 
 
-  client.on("message", function(message) {
+  me.client.on("message", function(message) {
 
-    // Logging messages for debugging
-    var header = (typeof message.channel.guild === "object" ? message.channel.guild.name + "/" + message.channel.name : "DM") + ", " + message.author.username + "#" + message.author.discriminator + ": ";
-    console.log(header + message.content.replace(/\n/g, "\n" + " ".repeat(header.length)));
-
-    if (message.content.substring(0, me.prefix.length) !== me.prefix || message.author.id === client.user.id || message.author.bot || typeof message.channel.guild !== "object") {
-      return;
+    if (message.content.substring(0, me.prefix.length) !== me.prefix || message.author.id === me.client.user.id || message.author.bot || typeof message.guild !== "object") {
+      return; // Invalid syntax, message sent by self; message sent by a bot; in a dm, then return
     }
 
     var command = processCommand(message.content);
-    // var command = message.content.substring(me.prefix.length).split(me.seperator)[0];
-    // var params = message.content.split(me.seperator).slice(1);
+    var target = findCommand(command.command);
 
-    for (var key in me.commands) {
-      if (me.commands[key].name === command.command && typeof me.commands[key].runtime === "function") {
-        me.commands[key].runtime(message, client, me.guild[message.channel.guild.id]);
-      }
+    if (target === null) {
+      return; // Command doesn't exist
+    }
+
+    if (typeof target.runtime === "function" && callListener("commandvalidate", message.guild, message).filter(function(result) { return !result; }).length === 0) {
+      target.runtime(message, me.client, me.data[message.guild.id]);
     }
 
   });
 
-  client.login(me.token); // Bot token. No stealies
+  me.client.login(me.token); // Bot token. No stealies
 
 }
 
