@@ -145,7 +145,7 @@
       }
 
       var command = processCommand(message.content);
-      if (command.params.length === 0) {
+      if (command.params.length < 1) {
         help();
         return;
       }
@@ -285,10 +285,7 @@
         return;
       }
       data.bin.playingMusic = null;
-      if (data.bin.voiceDispatcher !== null) {
-        data.bin.voiceDispatcher.end();
-        data.bin.voiceDispatcher = null;
-      }
+      data.bin.voiceDispatcher = null;
       data.bin.voiceChannel.disconnect();
       data.bin.voiceChannel = null;
       data.bin.musicState = 0;
