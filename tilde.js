@@ -27,12 +27,28 @@ function botInit() {
     return null;
   }
 
-  function callListener(listener, guild, message) {
+  function findData(dataName) {
+    if (typeof me.data[dataName] !== "undefined") {
+      return me.data[dataName];
+    }
+    return null;
+  }
+
+  function createData(dataName) {
+    me.data[dataName] = {
+      bin: {},
+      data: {}
+    };
+    return me.data[dataName];
+  }
+
+  function callListener(listener, guild, main) {
+    // Using main because some listeners give params other then a message
     var results = [];
     for (var key in me.commands) {
       if (typeof me.commands[key][listener] === "function") {
-        if (typeof message !== "undefined") {
-          results.push(me.commands[key][listener](message, me.client, me.data[guild.id]));
+        if (typeof main !== "undefined") {
+          results.push(me.commands[key][listener](main, me.client, me.data[guild.id]));
         } else {
           results.push(me.commands[key][listener](me.client, me.data[guild.id]));
         }
@@ -207,13 +223,24 @@ function botInit() {
 
       callListener("startup", guild);
     });
+
+    // Stupid DMs... gotta use a whole second block for them.
+    me.client.channels.findAll("type", "dm").forEach(function(channel) {
+      me.data[channel.id] = {
+        bin: {},
+        data: {}
+      };
+
+      // ...and a stupid second listener.
+      callListener("dmstartup", channel);
+    });
   });
 
 
   me.client.on("message", function(message) {
 
-    if (message.content.substring(0, me.prefix.length) !== me.prefix || message.author.id === me.client.user.id || message.author.bot || typeof message.guild !== "object") {
-      return; // Invalid syntax, message sent by self; message sent by a bot; in a dm, then return
+    if (message.content.substring(0, me.prefix.length) !== me.prefix || message.author.id === me.client.user.id || message.author.bot) {
+      return; // Invalid syntax, message sent by self; message sent by a bot; then return (it does allow DM messages)
     }
 
     var command = processCommand(message.content);
@@ -223,8 +250,10 @@ function botInit() {
       return; // Command doesn't exist
     }
 
-    if (typeof target.runtime === "function" && callListener("commandvalidate", message.guild, message).filter(function(result) { return !result; }).length === 0) {
+    if (message.channel.type === "text" && typeof target.runtime === "function" && callListener("commandvalidate", message.guild, message).filter(function(result) { return !result; }).length === 0) {
       target.runtime(message, me.client, me.data[message.guild.id]);
+    } else if (message.channel.type === "dm" && typeof target.dmruntime === "function" && callListener("dmcommandvalidate", message.channel, message).filter(function(result) { return !result; }).length === 0) {
+      target.dmruntime(message, me.client, me.data[message.channel.id]);
     }
 
   });
@@ -234,7 +263,20 @@ function botInit() {
       bin: {},
       data: {}
     };
+  });
 
+  me.client.on("guildMemberAdd", function(member) {
+    callListener("memberadd", member.guild, member);
+  });
+
+  me.client.on("channelCreate", function(channel) {
+    if (channel.type === "dm") {
+      // Must be a new DM
+      me.data[channel.id] = {
+        bin: {},
+        data: {}
+      };
+    }
   });
 
   me.client.login(me.token); // Bot token. No stealies
