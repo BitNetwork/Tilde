@@ -48,7 +48,7 @@
     runtime: function(message, client) {
       var command = processCommand(message.content);
       if (command.params.length < 1) {
-        message.channel.sendMessage("```" + me.prefix + "topic [text]\n\nEdits the for a channel.```");
+        message.channel.sendMessage("```" + me.prefix + "topic [text]\n\nEdits the topic for a channel.```");
         return;
       }
       message.channel.setTopic(command.params.join(me.seperator));
