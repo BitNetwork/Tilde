@@ -17,7 +17,7 @@
   permission: {
     name: "permission",
     startup: function(client, data) {
-      data.bin.perm = {};
+      data.data.perm = {};
     },
     runtime: function(message, client, data) {
       var command = processCommand(message.content);
@@ -42,14 +42,14 @@
         }
       }
 
-      data.bin.perm[target.name] = role.id;
+      data.data.perm[target.name] = role.id;
       message.channel.sendMessage("Permission status updated.");
     },
     commandvalidate: function(message, client, data) {
       var command = processCommand(message.content);
-      if (typeof data.bin.perm[command.command] !== "string") {
+      if (typeof data.data.perm[command.command] !== "string") {
         return true;
-      } else if (message.member.highestRole.comparePositionTo(message.guild.roles.get(data.bin.perm[command.command])) >= 0) {
+      } else if (message.member.highestRole.comparePositionTo(message.guild.roles.get(data.data.perm[command.command])) >= 0) {
         return true;
       }
       return false;

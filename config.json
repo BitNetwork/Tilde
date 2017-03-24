@@ -1,5 +1,5 @@
 {
   "token": "token",
   "prefix": "~",
-  "mods": ["./mods/music.js", "./mods/mod.js"]
+  "mods": ["./mods/music.js", "./mods/mod.js", "./mods/command.js", "./mods/file.js"]
 }
