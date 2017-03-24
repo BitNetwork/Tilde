@@ -110,14 +110,16 @@
         var embed = new lib_discord.RichEmbed();
         embed.setColor("#ff0000"); // Red... like YouTube ;)
         embed.setTitle(info.title);
-        embed.setAuthor(info.author);
+        embed.setAuthor(info.author.name);
         embed.setImage(info.iurl);
-        embed.setURL(info.loaderUrl);
+        embed.setURL(data.bin.playingMusic);
         if (info.description.length > 250) {
-          embed.setDescription("*" + info.description.substring(0, 247) + "...*");
+          embed.setDescription("*" + info.description.substring(0, 497) + "...*");
         } else {
-          embed.setDescription("*" + info.description.substring(0, 250) + "*");
+          embed.setDescription("*" + info.description.substring(0, 500) + "*");
         }
+        var published = new Date(info.published);
+        embed.setTimestamp(published);
         var seconds = 0;
         var minutes = 0;
         var hours = 0;
