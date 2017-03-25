@@ -26,6 +26,7 @@
           return;
         }
         me.data[message.guild.id.toString()].data = importJSON;
+        message.channel.sendMessage("Data imported.");
       });
     }
   }
