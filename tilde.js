@@ -36,10 +36,15 @@ function botInit() {
 
   function createData(dataName) {
     me.data[dataName] = {
-      bin: {},
-      data: {}
+      bin: {user: {}},
+      data: {user: {}}
     };
     return me.data[dataName];
+  }
+
+  function createUserData(dataName, userName) {
+    me.data[dataName].bin.user[userName] = {};
+    me.data[dataName].data.user[userName] = {};
   }
 
   function callListener(listener, guild, main) {
@@ -55,6 +60,10 @@ function botInit() {
       }
     }
     return results;
+  }
+
+  function grabServerName(member) {
+    return member.nickname !== null ? member.nickname : member.user.username;
   }
 
   function makeMention(id) {
@@ -127,7 +136,7 @@ function botInit() {
     console.log("[Error] JSON.mod field is invalid.");
   } else {
 
-    for (var i=0; i<me.config.mods.length; i++) {
+    for (var i = 0; i < me.config.mods.length; i++) {
 
       try {
         var data = lib_fs.readFileSync(me.config.mods[i], {encoding: "utf8"});
@@ -140,7 +149,7 @@ function botInit() {
         var commands = eval("new Object(" + data + ");");
       } catch (error) {
         console.log("[Error] Error loading mod <" + me.config.mods[i] + ">. Mod not loaded.");
-        break;
+        continue;
       }
 
       for (var command in commands) {
@@ -159,20 +168,13 @@ function botInit() {
     me.client.user.setGame("Discord");
 
     me.client.guilds.forEach(function(guild) {
-      me.data[guild.id] = {
-        bin: {},
-        data: {}
-      };
-
+      createData(guild.id);
       callListener("startup", guild);
     });
 
     // Stupid DMs... gotta use a whole second block for them.
     me.client.channels.findAll("type", "dm").forEach(function(channel) {
-      me.data[channel.id] = {
-        bin: {},
-        data: {}
-      };
+      createData(channel.id);
 
       // ...and a stupid second listener.
       callListener("dmstartup", channel);
