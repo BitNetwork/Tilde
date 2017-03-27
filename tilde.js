@@ -15,6 +15,12 @@ function botInit() {
   function processCommand(commandText) {
     var command = commandText.substring(me.prefix.length).split(me.seperator)[0];
     var params = commandText.substring(me.prefix.length + command.length).split(me.seperator).slice(1);
+    /*var stringParams = commandText.substring(me.prefix.length + command.length).split("\"");
+    for (var i = 0; i < stringParams.length; i += 2) {
+      if (stringParams[i] === " " || stringParams[i] === "") {
+        stringParams = stringParams.slice(0, i).slice(i + 1);
+      }
+    }*/
     return {command: command, params: params};
   }
 
@@ -201,6 +207,14 @@ function botInit() {
       target.dmruntime(message, me.client, me.data[message.channel.id]);
     }
 
+  });
+
+  me.client.on("messageReactionAdd", function(messageReaction, user) {
+    if (messageReaction.message.channel.type === "dm") {
+      callListener("dmreactionadd", messageReaction.message.channel, [messageReaction, user]); // I DISPISE DM SUPPORT
+    } else {
+      callListener("reactionadd", messageReaction.message.guild, [messageReaction, user]);
+    }
   });
 
   me.client.on("guildCreate", function(guild) {
