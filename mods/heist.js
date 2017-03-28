@@ -9,7 +9,7 @@
 
       data.data.heistBanks = [{name: "Some Guy's Wallet", size: 2, money: 350, difficulty: 0.6}, {name: "ATM Machine", size: 5, money: 1000, difficulty: 0.4}];
       data.data.heistActions = [{text: "$name accidently tripped the alarm.", result: 2}, {text: "$name was shot by local security... but survived.", result: 3}, {text: "$name cut through that safe like butter.", result: 0}, {text: "$name slept in and completely forgot about the heist.", result: 1}, {text: "In the process of setting up the explosive, $name was explosively killed.", result: 4}]; // 0: win, 1: alive, 2: caught, 3: injured, 4: dead
-      data.data.heistConfig = {joinTimer: 20 * 1000, jailTimer: 5 * 1000 * 60, deathTimer: 20 * 1000 * 60};
+      data.data.heistConfig = {joinTimer: 20 * 1000, jailTimer: 5 * 1000 * 60, deathTimer: 20 * 1000 * 60, healCost: 500, bailBaseCost: 500, bailGrowth: 1.05};
     },
     runtime: function(message, client, data) {
       function help() {
@@ -42,7 +42,9 @@
         data.data.user[message.author.id].heistStatDead = [0];
         data.data.user[message.author.id].heistStatStolden = 0;
 
-        message.channel.sendMessage("Welcome to the crew, " + (message.member.nickname !==null ? message.member.nickname : message.author.username) + ".");
+        data.data.user[message.author.id].heistBailCost = data.data.heistConfig.bailBaseCost;
+
+        message.channel.sendMessage("Welcome to the crew, " + (message.member.nickname !== null ? message.member.nickname : message.author.username) + ".");
       } else if (command.params[0] === "stats") {
         if (typeof data.data.user[message.author.id] === "undefined" || typeof data.data.user[message.author.id].heistStatus === "undefined") {
           message.channel.sendMessage("You're not part of the crew yet. Try joining them first.");
@@ -86,12 +88,27 @@
           embed.addField("Timer", output.trim(), false);
         }
 
+        if (heister.heistStatus === 2) {
+          embed.addField("Bail cost", heister.heistBailCost, false);
+        } else if (heister.heistStatus === 4) {
+          embed.addField("Heal cost", data.data.heistConfig.healCost, false);
+        }
+
         embed.addField("Looted", heister.heistStatWon[0] + " [" + heister.heistStatWon[1] + "]", true);
         embed.addField("Apprehensions", heister.heistStatCaught[0] + " [" + heister.heistStatCaught[1] + "]", true);
         embed.addField("Injuries", heister.heistStatInjured[0] + " [" + heister.heistStatInjured[1] + "]", true);
         embed.addField("Deaths", heister.heistStatDead[0], true);
         embed.addField("Credits Stolden", heister.heistStatStolden, true);
 
+        message.channel.sendEmbed(embed);
+
+      } else if (command.params[0] === "banks") {
+
+        var embed = new lib_discord.RichEmbed();
+        for (var i = 0; i < data.data.heistBanks.length; i++) {
+          var bank = data.data.heistBanks[i];
+          embed.addField(bank.name, bank.money + " - " + bank.size + " - " + (bank.difficulty * 100) + "%", false);
+        }
         message.channel.sendEmbed(embed);
 
       } else if (command.params[0] === "play") {
@@ -153,6 +170,7 @@
                 } else if (action.result === 2) {
                   heister.heistStatCaught[0]++;
                   heister.heistStatCaught[1]++;
+                  heister.heistBailCost = Math.ceil(Math.pow(heister.heistBailCost, data.data.heistConfig.bailGrowth)); // Oh yeah, that's right... it's exponential
                 } else if ((action.result === 3 && user.heistStatus === 3) || action.result === 4) {
                   heister.heistStatDead[0]++;
                   heister.heistStatWon[1] = 0;
@@ -215,20 +233,26 @@
               message.channel.sendMessage("The heist has ended.");
               data.bin.heistState = 0;
               setTimeout(function() {
+
                 if (data.bin.heistLooters.length > 0) {
                   var creditPerLooter = Math.floor(bank.money / 2 / data.bin.heistLooters.length);
                   var embed = new lib_discord.RichEmbed();
                   embed.setTitle("Credits won");
                   embed.setColor("#FFDF00");
+
                   for (var i = 0; i < data.bin.heistLooters.length; i++) {
                     var looter = data.data.user[data.bin.heistLooters[i].id];
                     embed.addField(grabServerName(data.bin.heistLooters[i]), creditPerLooter);
                     looter.money += creditPerLooter;
+                    looter.heistStatStolden += creditPerLooter;
+                    bank.money -= creditPerLooter;
                   }
+                  embed.setFooter("Credits left: " + bank.money);
                   message.channel.sendEmbed(embed);
                 } else {
                   message.channel.sendMessage("No one made it out safe.");
                 }
+
               }, 2500);
             }, data.bin.heistCrew.length * 2500 + 5000);
 
@@ -303,9 +327,30 @@
           message.channel.sendMessage("You've still have " + output + " left until you can revive.");
         }
       } else if (command.params[0] === "heal") {
+        if (typeof data.data.user[message.author.id] === "undefined" || typeof data.data.user[message.author.id].heistStatus === "undefined") {
+          message.channel.sendMessage("You're not part of the crew yet. Try joining them first.");
+          return;
+        }
+        var heister = data.data.user[message.author.id];
+
+        if (heister.heistStatus !== 3) {
+          message.channel.sendMessage("You're not hurt.");
+          return;
+        } else if (heister.money < data.data.heistConfig.healCost) {
+          message.channel.sendMessage("You don't have that sum in your account.");
+          return;
+        }
+
+        heister.heistStatus = 1;
+        heister.money -= data.data.heistConfig.healCost;
+        message.channel.sendMessage("You've been healed of your injuries.");
 
       } else if (command.params[0] === "bailout") {
-
+        if (typeof data.data.user[message.author.id] === "undefined" || typeof data.data.user[message.author.id].heistStatus === "undefined") {
+          message.channel.sendMessage("You're not part of the crew yet. Try joining them first.");
+          return;
+        }
+        var heister = data.data.user[message.author.id];
       } else {
         help();
       }
