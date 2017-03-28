@@ -13,7 +13,7 @@
     },
     runtime: function(message, client, data) {
       function help() {
-        message.channel.sendMessage("```" + me.prefix + "heist [join|stats|banks|play|release|revive|heal|bailout]```");
+        message.channel.sendMessage("```" + me.prefix + "heist [join|stats|banks|play|release|revive|heal|bailout]\n\nHeist is a game about teaming up with other crew members to steal credits from banks.\n\n!heist join\nJoins the heist crew and creates your heist profile.\n\n!heist stats [user]\nShows user's statistics and status. The color determines your status: green: alive, blue: apprehended, red: injured, black/gray: dead.\n\n!heist banks\nDisplays a list of banks.\n\n!heist play\nBegins or joins a game of heist. A checkmark reaction means you're in the crew. You can't join if you're apprehended or dead.\n\n!heist release\nReleases you after you've finished your jail sentence.\n\n!heist revive\nResurrectes you from the dead after your death timer has finished.\n\n!heist heal\nHeals you for a price, removing any injuries.\n\n!heist bailout user\nBails user out of jail for a price. Has a chance of failing and the bailer getting caught.```");
       }
       var command = processCommand(message.content);
       if (command.params.length < 1) {
@@ -52,6 +52,15 @@
         }
 
         var heister = data.data.user[message.author.id];
+        if (command.params.length > 1) {
+          var user = parseMention(command.params[1]);
+          if (typeof data.data.user[user] === "undefined" || typeof data.data.user[user].heistStatus === "undefined") {
+            message.channel.sendMessage("They're not part of the crew yet.");
+            return;
+          }
+          heister = data.data.user[user];
+        }
+
         var embed = new lib_discord.RichEmbed();
 
         embed.setAuthor(grabServerName(message.member));
@@ -67,10 +76,6 @@
           color = "#000000"
         }
         embed.setColor(color);
-        // console.log(message.author.avatarURL)
-        if (message.author.avatarURL !== null) {
-          embed.setThumbnail(message.author.avatarURL);
-        }
 
         if (heister.heistStatus === 2 || heister.heistStatus === 4) {
           var remaining = new Date(heister.heistTimer - Date.now());
@@ -170,12 +175,12 @@
                 } else if (action.result === 2) {
                   heister.heistStatCaught[0]++;
                   heister.heistStatCaught[1]++;
-                  heister.heistBailCost = Math.ceil(Math.pow(heister.heistBailCost, data.data.heistConfig.bailGrowth)); // Oh yeah, that's right... it's exponential
                 } else if ((action.result === 3 && user.heistStatus === 3) || action.result === 4) {
                   heister.heistStatDead[0]++;
                   heister.heistStatWon[1] = 0;
                   heister.heistStatCaught[1] = 0;
                   heister.heistStatInjured[1] = 0;
+                  heister.heistBailCost = data.data.heistConfig.bailBaseCost;
                 } else if (action.result === 3) {
                   heister.heistStatInjured[0]++;
                   heister.heistStatInjured[1]++;
@@ -351,6 +356,31 @@
           return;
         }
         var heister = data.data.user[message.author.id];
+
+        if (command.params.length < 2) {
+          help();
+          return;
+        }
+        var friend = parseMention(command.params[1]);
+
+        if (friend === null || data.data.user[friend]) {
+          message.channel.sendMessage("Friend isn't part of the crew.");
+          return;
+        } else if (friend === message.author.id) {
+          message.channel.sendMessage("You can't bail yourself out of jail.");
+          return;
+        } else if (heister.heistStatus !== 2) {
+          message.channel.sendMessage("Your friend is not apprehended.");
+          return;
+        } else if (heister.money < data.data.user[friend].heistBailCost) {
+          message.channel.sendMessage("You don't have that sum in your account.");
+          return;
+        }
+
+        heister.money -= heister.heistBailCost;
+        friend.heistBailCost = Math.ceil(Math.pow(heister.heistBailCost, data.data.heistConfig.bailGrowth)); // Oh yeah, that's right... it's exponential
+        friend.heistStatus = 1;
+
       } else {
         help();
       }
