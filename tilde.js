@@ -15,13 +15,20 @@ function botInit() {
   function processCommand(commandText) {
     var command = commandText.substring(me.prefix.length).split(me.seperator)[0];
     var params = commandText.substring(me.prefix.length + command.length).split(me.seperator).slice(1);
-    /*var stringParams = commandText.substring(me.prefix.length + command.length).split("\"");
-    for (var i = 0; i < stringParams.length; i += 2) {
+    var stringParams = commandText.substring(me.prefix.length + command.length).split("\"");
+    var stringParams = [" ","SuperCell Bank"," 1400 ","aaa",""]
+    var i = 0;
+    while (i < stringParams.length) {
       if (stringParams[i] === " " || stringParams[i] === "") {
-        stringParams = stringParams.slice(0, i).slice(i + 1);
+        stringParams.splice(i, 1);
+        i++;
+      } else {
+        stringParams[i] = stringParams[i].trim();
+        i += 2;
       }
-    }*/
-    return {command: command, params: params};
+    }
+    stringParams;
+    return {command: command, params: params, stringParams: stringParams};
   }
 
   function findCommand(commandName) {
