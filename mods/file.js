@@ -25,7 +25,14 @@
           message.channel.sendMessage("File is not valid JSON.");
           return;
         }
+
+        if (typeof importJSON.user === "undefined") {
+          message.channel.sendMessage("File is not valid JSON.");
+          return;
+        }
+
         me.data[message.guild.id.toString()].data = importJSON;
+        message.channel.sendMessage("Data imported.");
       });
     }
   }

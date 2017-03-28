@@ -15,7 +15,20 @@ function botInit() {
   function processCommand(commandText) {
     var command = commandText.substring(me.prefix.length).split(me.seperator)[0];
     var params = commandText.substring(me.prefix.length + command.length).split(me.seperator).slice(1);
-    return {command: command, params: params};
+    var stringParams = commandText.substring(me.prefix.length + command.length).split("\"");
+    var stringParams = [" ","SuperCell Bank"," 1400 ","aaa",""]
+    var i = 0;
+    while (i < stringParams.length) {
+      if (stringParams[i] === " " || stringParams[i] === "") {
+        stringParams.splice(i, 1);
+        i++;
+      } else {
+        stringParams[i] = stringParams[i].trim();
+        i += 2;
+      }
+    }
+    stringParams;
+    return {command: command, params: params, stringParams: stringParams};
   }
 
   function findCommand(commandName) {
@@ -36,10 +49,15 @@ function botInit() {
 
   function createData(dataName) {
     me.data[dataName] = {
-      bin: {},
-      data: {}
+      bin: {user: {}},
+      data: {user: {}}
     };
     return me.data[dataName];
+  }
+
+  function createUserData(dataName, userName) {
+    me.data[dataName].bin.user[userName] = {};
+    me.data[dataName].data.user[userName] = {};
   }
 
   function callListener(listener, guild, main) {
@@ -55,6 +73,10 @@ function botInit() {
       }
     }
     return results;
+  }
+
+  function grabServerName(member) {
+    return member.nickname !== null ? member.nickname : member.user.username;
   }
 
   function makeMention(id) {
@@ -81,64 +103,7 @@ function botInit() {
     return mention.match(/^<#(\d+)>$/) !== null ? mention.match(/^<#(\d+)>$/)[1] : null;
   }
 
-  this.commands = {
-    echo: {
-      name: "echo",
-      runtime: function(message, client) {
-        var command = processCommand(message.content);
-        if (command.params.length < 1) {
-          message.channel.sendMessage("```" + me.prefix + "echo [text]\n\nEchos text back to chat.```");
-          return;
-        }
-        message.channel.sendMessage(command.params.join(me.seperator));
-      }
-    },
-    tts: {
-      name: "tts",
-      runtime: function(message, client) {
-        var command = processCommand(message.content);
-        if (command.params.length < 1) {
-          message.channel.sendMessage("```" + me.prefix + "tts [text]\n\nSpeaks text back to chat using text-to-speech.```");
-          return;
-        }
-        message.channel.sendMessage(command.params.join(me.seperator), {tts: true});
-      }
-    },
-    react: {
-      name: "react",
-      runtime: function(message, client) {
-        var command = processCommand(message.content);
-        if (command.params.length < 2) {
-          message.channel.sendMessage("```" + me.prefix + "react [messageid] [emoji]\n\nReacts to a message using an emoji.```");
-          return;
-        }
-        message.channel.fetchMessage(command.params[0]).then(function(message) {
-          message.react(command.params[1]);
-        }).catch(function(error) {
-          message.channel.sendMessage("Message not found.");
-        });
-      }
-    },
-    ping: {
-      name: "ping",
-      runtime: function(message, client) {
-        message.channel.sendMessage("Pong!");
-      }
-    },
-    embed: {
-      name: "embed",
-      runtime: function(message, client) {
-        var command = processCommand(message.content);
-        if (command.params.length < 1) {
-          message.channel.sendMessage("```" + me.prefix + "embed [text]\n\nCreates an embed with the given text.```");
-          return;
-        }
-        var embed = new lib_discord.RichEmbed();
-        embed.setDescription(command.params.join(me.seperator));
-        message.channel.sendEmbed(embed);
-      }
-    }
-  };
+  this.commands = {};
 
   try {
     var data = lib_fs.readFileSync("./config.json", {encoding: "utf8"});
@@ -184,7 +149,7 @@ function botInit() {
     console.log("[Error] JSON.mod field is invalid.");
   } else {
 
-    for (var i=0; i<me.config.mods.length; i++) {
+    for (var i = 0; i < me.config.mods.length; i++) {
 
       try {
         var data = lib_fs.readFileSync(me.config.mods[i], {encoding: "utf8"});
@@ -197,7 +162,7 @@ function botInit() {
         var commands = eval("new Object(" + data + ");");
       } catch (error) {
         console.log("[Error] Error loading mod <" + me.config.mods[i] + ">. Mod not loaded.");
-        break;
+        continue;
       }
 
       for (var command in commands) {
@@ -216,20 +181,13 @@ function botInit() {
     me.client.user.setGame("Discord");
 
     me.client.guilds.forEach(function(guild) {
-      me.data[guild.id] = {
-        bin: {},
-        data: {}
-      };
-
+      createData(guild.id);
       callListener("startup", guild);
     });
 
     // Stupid DMs... gotta use a whole second block for them.
     me.client.channels.findAll("type", "dm").forEach(function(channel) {
-      me.data[channel.id] = {
-        bin: {},
-        data: {}
-      };
+      createData(channel.id);
 
       // ...and a stupid second listener.
       callListener("dmstartup", channel);
@@ -256,6 +214,14 @@ function botInit() {
       target.dmruntime(message, me.client, me.data[message.channel.id]);
     }
 
+  });
+
+  me.client.on("messageReactionAdd", function(messageReaction, user) {
+    if (messageReaction.message.channel.type === "dm") {
+      callListener("dmreactionadd", messageReaction.message.channel, [messageReaction, user]); // I DISPISE DM SUPPORT
+    } else {
+      callListener("reactionadd", messageReaction.message.guild, [messageReaction, user]);
+    }
   });
 
   me.client.on("guildCreate", function(guild) {
