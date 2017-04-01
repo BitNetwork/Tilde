@@ -63,7 +63,8 @@
 
         var embed = new lib_discord.RichEmbed();
 
-        embed.setAuthor(grabServerName(message.member));
+        // embed.setAuthor(grabServerName(message.member)); // Will re-add when parseMention returns a member object
+
         var status = "";
         var color = "";
         if (heister.heistStatus === 1) {
@@ -157,7 +158,7 @@
 
             for (var i = 0; i < data.bin.heistCrew.length; i++) {
               var user = data.data.user[data.bin.heistCrew[i].id];
-              setTimeout(function(i) {
+              setTimeout(function(user, i) {
                 var action = null;
                 if (Math.random() <= bank.difficulty) {
                   do {
@@ -170,20 +171,20 @@
                 }
 
                 if (action.result === 0) {
-                  heister.heistStatWon[0]++;
-                  heister.heistStatWon[1]++;
+                  user.heistStatWon[0]++;
+                  user.heistStatWon[1]++;
                 } else if (action.result === 2) {
-                  heister.heistStatCaught[0]++;
-                  heister.heistStatCaught[1]++;
+                  user.heistStatCaught[0]++;
+                  user.heistStatCaught[1]++;
                 } else if ((action.result === 3 && user.heistStatus === 3) || action.result === 4) {
-                  heister.heistStatDead[0]++;
-                  heister.heistStatWon[1] = 0;
-                  heister.heistStatCaught[1] = 0;
-                  heister.heistStatInjured[1] = 0;
-                  heister.heistBailCost = data.data.heistConfig.bailBaseCost;
+                  user.heistStatDead[0]++;
+                  user.heistStatWon[1] = 0;
+                  user.heistStatCaught[1] = 0;
+                  user.heistStatInjured[1] = 0;
+                  user.heistBailCost = data.data.heistConfig.bailBaseCost;
                 } else if (action.result === 3) {
-                  heister.heistStatInjured[0]++;
-                  heister.heistStatInjured[1]++;
+                  user.heistStatInjured[0]++;
+                  user.heistStatInjured[1]++;
                 }
 
                 var won = false;
@@ -231,7 +232,7 @@
                     message.react(emote);
                   }
                 });
-              }, i * 2500 + 2500, i);
+              }, i * 2500 + 2500, user, i);
             }
 
             setTimeout(function() {
@@ -362,24 +363,27 @@
           return;
         }
         var friend = parseMention(command.params[1]);
+        var friendHeister = data.data.user[friend];
 
-        if (friend === null || data.data.user[friend]) {
+        if (friend === null || data.data.user[friend] === "undefined") {
           message.channel.sendMessage("Friend isn't part of the crew.");
           return;
         } else if (friend === message.author.id) {
           message.channel.sendMessage("You can't bail yourself out of jail.");
           return;
-        } else if (heister.heistStatus !== 2) {
+        } else if (friendHeister.heistStatus !== 2) {
           message.channel.sendMessage("Your friend is not apprehended.");
           return;
-        } else if (heister.money < data.data.user[friend].heistBailCost) {
+        } else if (heister.heistStatus === 2) {
+          message.channel.sendMessage("You can't bail someone out if you're already in jail.");
+        } else if (heister.money < friendHeister.heistBailCost) {
           message.channel.sendMessage("You don't have that sum in your account.");
           return;
         }
 
-        heister.money -= heister.heistBailCost;
-        friend.heistBailCost = Math.ceil(Math.pow(heister.heistBailCost, data.data.heistConfig.bailGrowth)); // Oh yeah, that's right... it's exponential
-        friend.heistStatus = 1;
+        heister.money -= friendHeister.heistBailCost;
+        friendHeister.heistBailCost = Math.ceil(Math.pow(heister.heistBailCost, data.data.heistConfig.bailGrowth)); // Oh yeah, that's right... it's exponential
+        friendHeister.heistStatus = 1;
 
       } else {
         help();
