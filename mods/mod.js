@@ -1,14 +1,4 @@
 {
-  game: {
-    name: "game",
-    runtime: function(message, client) {
-      if (processCommand(message.content).params.length === 0) {
-        message.channel.sendMessage("```" + me.prefix + "game [game]\n\nChanges the current game for this bot.```");
-        return;
-      }
-      client.user.setGame(processCommand(message.content).params.join(me.seperator));
-    }
-  },
   pin: {
     name: "pin",
     runtime: function(message, client) {
@@ -16,12 +6,22 @@
       if (command.params.length < 1) {
         message.channel.sendMessage("```" + me.prefix + "pin [messageid]\n\nPins a message to a channel.```");
         return;
+      } else if (message.guild.members.get(client.user.id).hasPermission("MANAGE_MESSAGES") === false) {
+        message.channel.sendMessage("I don't have that permission.");
+        return;
       }
-      message.channel.fetchMessage(command.params[0]).then(function(message) {
-        message.pin().then(function() {
-          message.channel.sendMessage("Message pinned.");
+
+      message.channel.fetchMessage(command.params[0]).then(function(pinnedMessage) {
+        pinnedMessage.channel.fetchPinnedMessages().then(function(pinnedMessages) {
+          if (pinnedMessages.has(pinnedMessage.id) === false) {
+            pinnedMessage.pin().then(function() {
+              message.channel.sendMessage("Message pinned.");
+            });
+          } else {
+            message.channel.sendMessage("Message already pinned.");
+          }
         });
-      }).catch(function(error) {
+      }, function(error) {
         message.channel.sendMessage("Message not found.");
       });
     }
@@ -33,12 +33,22 @@
       if (command.params.length < 1) {
         message.channel.sendMessage("```" + me.prefix + "unpin [messageid]\n\nUnpins a message to a channel.```");
         return;
+      } else if (message.guild.members.get(client.user.id).hasPermission("MANAGE_MESSAGES") === false) {
+        message.channel.sendMessage("I don't have that permission.");
+        return;
       }
-      message.channel.fetchMessage(command.params[0]).then(function(message) {
-        message.unpin().then(function() {
-          message.channel.sendMessage("Message unpinned.");
+
+      message.channel.fetchMessage(command.params[0]).then(function(pinnedMessage) {
+        pinnedMessage.channel.fetchPinnedMessages().then(function(pinnedMessages) {
+          if (pinnedMessages.has(pinnedMessage.id)) {
+            pinnedMessage.unpin().then(function() {
+              message.channel.sendMessage("Message unpinned.");
+            });
+          } else {
+            message.channel.sendMessage("Message not pinned.");
+          }
         });
-      }).catch(function(error) {
+      }, function(error) {
         message.channel.sendMessage("Message not found.");
       });
     }
@@ -156,12 +166,12 @@
     name: "kick",
     runtime: function(message, client) {
       var command = processCommand(message.content);
-      if (command.params.length < 1 || parseMention(command.params[0]) === null) {
+      if (command.params.length < 1) {
         message.channel.sendMessage("```" + me.prefix + "kick [user]\n\nKicks a member from this guild.```");
         return;
       }
 
-      var target = message.guild.member(parseMention(command.params[0]));
+      var target = parseMention(command.params[0], message.guild);
 
       if (target === null) {
         message.channel.sendMessage("Member not found.");
