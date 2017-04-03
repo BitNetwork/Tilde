@@ -53,17 +53,23 @@
 
         var heister = data.data.user[message.author.id];
         if (command.params.length > 1) {
-          var user = parseMention(command.params[1]);
-          if (typeof data.data.user[user] === "undefined" || typeof data.data.user[user].heistStatus === "undefined") {
+          var member = parseMention(command.params[1], message.guild);
+          if (member === null || typeof data.data.user[member.id] === "undefined" || typeof data.data.user[member.id].heistStatus === "undefined") {
             message.channel.sendMessage("They're not part of the crew yet.");
             return;
           }
-          heister = data.data.user[user];
+          heister = data.data.user[member.id];
+        } else {
+          var member = message.member;
         }
 
         var embed = new lib_discord.RichEmbed();
 
-        // embed.setAuthor(grabServerName(message.member)); // Will re-add when parseMention returns a member object
+        embed.setAuthor(grabServerName(member));
+        var avatar = member.user.avatarURL;
+        if (avatar !== null) {
+          embed.setThumbnail(avatar);
+        }
 
         var status = "";
         var color = "";
@@ -363,12 +369,12 @@
           return;
         }
         var friend = parseMention(command.params[1]);
-        var friendHeister = data.data.user[friend];
+        var friendHeister = data.data.user[friend.id];
 
-        if (friend === null || data.data.user[friend] === "undefined") {
+        if (friend === null || data.data.user[friend.id] === "undefined") {
           message.channel.sendMessage("Friend isn't part of the crew.");
           return;
-        } else if (friend === message.author.id) {
+        } else if (friend.id === message.author.id) {
           message.channel.sendMessage("You can't bail yourself out of jail.");
           return;
         } else if (friendHeister.heistStatus !== 2) {
