@@ -39,7 +39,12 @@
   ping: {
     name: "ping",
     runtime: function(message, client) {
-      message.channel.sendMessage("Pong!");
+      var incomePing = Date.now() - message.createdTimestamp;
+      var outgoingPing = Date.now();
+      message.channel.sendMessage("Incoming: " + incomePing + "ms").then(function(createdMessage) {
+        outgoingPing = createdMessage.createdTimestamp - outgoingPing;
+        createdMessage.edit(createdMessage.content + "\nOutgoing: " + outgoingPing + "ms\nTotal: " + (incomePing + outgoingPing) + "ms");
+      });
     }
   },
   embed: {
