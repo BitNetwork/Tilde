@@ -26,6 +26,8 @@
   play: {
     name: "play",
     runtime: function(message, client, data) {
+      const lib_ytdl = require("ytdl-core");
+
       if (data.bin.musicState === 2) {
         data.bin.voiceDispatcher.resume();
         data.bin.musicState = 1;
@@ -90,6 +92,8 @@
   song: {
     name: "song",
     runtime: function(message, client, data) {
+      const lib_ytdl = require("ytdl-core");
+
       if (data.bin.musicState === 0) {
         message.channel.sendMessage("There's no music playing.");
         return;
