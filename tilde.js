@@ -1,5 +1,4 @@
 const lib_discord = require("discord.js");
-const lib_ytdl = require("ytdl-core");
 const lib_fs = require("fs");
 const lib_readline = require("readline");
 
@@ -16,7 +15,6 @@ function botInit() {
     var command = commandText.substring(me.prefix.length).split(me.seperator)[0];
     var params = commandText.substring(me.prefix.length + command.length).split(me.seperator).slice(1);
     var stringParams = commandText.substring(me.prefix.length + command.length).split("\"");
-    var stringParams = [" ","SuperCell Bank"," 1400 ","aaa",""]
     var i = 0;
     while (i < stringParams.length) {
       if (stringParams[i] === " " || stringParams[i] === "") {
@@ -83,8 +81,27 @@ function botInit() {
     return "<@" + id + ">";
   }
 
-  function parseMention(mention) {
-    return mention.match(/^<@!?(\d+)>$/) !== null ? mention.match(/^<@!?(\d+)>$/)[1] : null;
+  function parseMention(mention, guild) { // MAKE SURE TO FIX EVERYTHING THIS CHANGE BREAKS
+    var matches = mention.match(/^(?:<@!?(\d+)>)|(\d+)$/);
+    if (matches === null) {
+      return null
+    } else if (typeof matches[1] === "string" || typeof matches[2] === "string") {
+
+      var id = matches[1] || matches[2];
+
+      if (typeof guild !== "undefined") {
+        var user = guild.members.get(id);
+      } else {
+        var user = me.client.users.get(id);
+      }
+
+      if (typeof user !== "undefined") {
+        return user;
+      } else {
+        return null;
+      }
+
+    }
   }
 
   function makeRoleMention(id) {
