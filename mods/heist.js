@@ -102,7 +102,7 @@
 
         if (heister.heistStatus === 2) {
           embed.addField("Bail cost", heister.heistBailCost, false);
-        } else if (heister.heistStatus === 4) {
+        } else if (heister.heistStatus === 3) {
           embed.addField("Heal cost", data.data.heistConfig.healCost, false);
         }
 
