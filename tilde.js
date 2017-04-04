@@ -15,6 +15,11 @@ function botInit() {
     var command = commandText.substring(me.prefix.length).split(me.seperator)[0];
     var params = commandText.substring(me.prefix.length + command.length).split(me.seperator).slice(1);
     var stringParams = commandText.substring(me.prefix.length + command.length).split("\"");
+
+    if (stringParams.length <= 1) {
+      return {command: command, params: params, stringParams: params};
+    }
+
     var i = 0;
     while (i < stringParams.length) {
       if (stringParams[i] === " " || stringParams[i] === "") {
@@ -25,8 +30,8 @@ function botInit() {
         i += 2;
       }
     }
-    stringParams;
-    return {command: command, params: params, stringParams: stringParams};
+
+    return {command: command, params: stringParams, stringParams: stringParams};
   }
 
   function findCommand(commandName) {
@@ -199,7 +204,7 @@ function botInit() {
 
     me.client.guilds.forEach(function(guild) {
       createData(guild.id);
-      callListener("startup", guild);
+      callListener("startup", guild, guild);
     });
 
     // Stupid DMs... gotta use a whole second block for them.
@@ -213,6 +218,8 @@ function botInit() {
 
 
   me.client.on("message", function(message) {
+
+    callListener("message", message.guild, message)
 
     if (message.content.substring(0, me.prefix.length) !== me.prefix || message.author.id === me.client.user.id || message.author.bot) {
       return; // Invalid syntax, message sent by self; message sent by a bot; then return (it does allow DM messages)
