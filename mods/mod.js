@@ -53,6 +53,25 @@
       });
     }
   },
+  react: {
+    name: "react",
+    runtime: function(message, client) {
+      var command = processCommand(message.content);
+      if (command.params.length < 2) {
+        message.channel.sendMessage("```" + me.prefix + "react [messageid] [emoji]\n\nReacts to a message using an emoji.```");
+        return;
+      } else if (message.guild.members.get(client.user.id).hasPermission("ADD_REACTIONS") === false) {
+        message.channel.sendMessage("I don't have that permission.");
+        return;
+      }
+
+      message.channel.fetchMessage(command.params[0]).then(function(message) {
+        message.react(command.params[1]);
+      }, function(error) {
+        message.channel.sendMessage("Message not found.");
+      });
+    }
+  },
   topic: {
     name: "topic",
     runtime: function(message, client) {
@@ -60,7 +79,11 @@
       if (command.params.length < 1) {
         message.channel.sendMessage("```" + me.prefix + "topic [text]\n\nEdits the topic for a channel.```");
         return;
+      } else if (message.guild.members.get(client.user.id).hasPermission("MANAGE_CHANNELS") === false) {
+        message.channel.sendMessage("I don't have that permission.");
+        return;
       }
+
       message.channel.setTopic(command.params.join(me.seperator));
     }
   },
@@ -71,36 +94,101 @@
       if (command.params.length < 1 || command.params[0].match(/^\d*$/) === null) {
         message.channel.sendMessage("```" + me.prefix + "position [position]\n\nRe-positions the channel in the channel list.```");
         return;
+      } else if (message.guild.members.get(client.user.id).hasPermission("MANAGE_CHANNELS") === false) {
+        message.channel.sendMessage("I don't have that permission.");
+        return;
       }
+
       message.channel.setPosition(parseInt(command.params[0]));
     }
   },
-  clone: {
-    name: "clone",
+  createtext: {
+    name: "createtext",
     runtime: function(message, client) {
       var command = processCommand(message.content);
       if (command.params.length < 1) {
-        message.channel.sendMessage("```" + me.prefix + "clone [name]\n\nClones the current channel into a new channel.```");
+        message.channel.sendMessage("```" + me.prefix + "createtext [name]\n\nCreates a new channel.```");
         return;
-      }
-
-      if (command.params[0].length > 100) {
+      } else if (message.guild.members.get(client.user.id).hasPermission("MANAGE_CHANNELS") === false) {
+        message.channel.sendMessage("I don't have that permission.");
+        return;
+      } else if (command.params[0].length > 100) {
         message.channel.sendMessage("That name is too long.");
         return;
-      }
-
-      if (command.params[0].length < 2) {
+      } else if (command.params[0].length < 2) {
         message.channel.sendMessage("That name is too short.");
+        return;
+      } else if (command.params[0].match(/^[A-Za-z_-\d]*$/) === null) {
+        message.channel.sendMessage("That name is invalid.");
         return;
       }
 
-      if (command.params[0].match(/^[A-Za-z_-\d]*$/) === null) {
+      message.guild.createChannel(command.params[0], "text").then(function() {
+        message.channel.sendMessage("Channel created.");
+      });
+    }
+  },
+  textclone: {
+    name: "textclone",
+    runtime: function(message, client) {
+      var command = processCommand(message.content);
+      if (command.params.length < 1) {
+        message.channel.sendMessage("```" + me.prefix + "textclone [name]\n\nClones the current channel into a new channel.```");
+        return;
+      } else if (message.guild.members.get(client.user.id).hasPermission("MANAGE_CHANNELS") === false) {
+        message.channel.sendMessage("I don't have that permission.");
+        return;
+      } else if (command.params[0].length > 100) {
+        message.channel.sendMessage("That name is too long.");
+        return;
+      } else if (command.params[0].length < 2) {
+        message.channel.sendMessage("That name is too short.");
+        return;
+      } else if (command.params[0].match(/^[A-Za-z_-\d]*$/) === null) {
         message.channel.sendMessage("That name is invalid.");
         return;
       }
 
       message.channel.clone(command.params[0]).then(function() {
         message.channel.sendMessage("Channel cloned.");
+      });
+    }
+  },
+  textdelete: {
+    name: "textdelete",
+    runtime: function(message, client) {
+      var command = processCommand(message.content);
+      if (message.guild.members.get(client.user.id).hasPermission("MANAGE_CHANNELS") === false) {
+        message.channel.sendMessage("I don't have that permission.");
+        return;
+      }
+
+      message.channel.delete();
+    }
+  },
+  createvoice: {
+    name: "createvoice",
+    runtime: function(message, client) {
+      var command = processCommand(message.content);
+      if (command.params.length < 1) {
+        message.channel.sendMessage("```" + me.prefix + "createvoice [name]\n\nCreates a new voice channel.```");
+        return;
+      } else if (message.guild.members.get(client.user.id).hasPermission("MANAGE_CHANNELS") === false) {
+        message.channel.sendMessage("I don't have that permission.");
+        return;
+      } else if (command.params[0].length > 100) {
+        message.channel.sendMessage("That name is too long.");
+        return;
+      } else if (command.params[0].length < 2) {
+        message.channel.sendMessage("That name is too short.");
+        return;
+      } else if (command.params[0].match(/^[A-Za-z_-\d]*$/) === null) {
+        message.channel.sendMessage("That name is invalid.");
+        return;
+      }
+
+      message.guild.createChannel(command.params[0], "voice").then(function() {
+        message.channel.sendMessage("Voice channel created.");
       });
     }
   },
@@ -111,25 +199,39 @@
       if (command.params.length < 1) {
         message.channel.sendMessage("```" + me.prefix + "voiceclone [name]\n\nClones the current connected voice channel into a new channel.```");
         return;
-      }
-
-      if (typeof message.member.voiceChannel === "undefined") {
+      } else if (message.guild.members.get(client.user.id).hasPermission("MANAGE_CHANNELS") === false) {
+        message.channel.sendMessage("I don't have that permission.");
+        return;
+      } else if (typeof message.member.voiceChannel === "undefined") {
         message.channel.sendMessage(makeMention(message.author.id) + " You don't appear to be in a voice channel.");
         return;
-      }
-
-      if (command.params[0].length > 100) {
+      } else if (command.params[0].length > 100) {
         message.channel.sendMessage("That name is too long.");
         return;
-      }
-
-      if (command.params[0].length < 2) {
+      } else if (command.params[0].length < 2) {
         message.channel.sendMessage("That name is too short.");
         return;
       }
 
       message.member.voiceChannel.clone(command.params[0]).then(function() {
         message.channel.sendMessage("Voice channel cloned.");
+      });
+    }
+  },
+  voicedelete: {
+    name: "voicedelete",
+    runtime: function(message, client) {
+      var command = processCommand(message.content);
+      if (message.guild.members.get(client.user.id).hasPermission("MANAGE_CHANNELS") === false) {
+        message.channel.sendMessage("I don't have that permission.");
+        return;
+      } else if (typeof message.member.voiceChannel === "undefined") {
+        message.channel.sendMessage(makeMention(message.author.id) + " You don't appear to be in a voice channel.");
+        return;
+      }
+
+      message.member.voiceChannel.delete().then(function() {
+        message.channel.sendMessage("Voice channel deleted.");
       });
     }
   },
