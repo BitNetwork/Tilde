@@ -16,7 +16,7 @@
   },
   permission: {
     name: "permission",
-    startup: function(client, data) {
+    startup: function(guild, client, data) {
       data.data.perm = {};
     },
     runtime: function(message, client, data) {
