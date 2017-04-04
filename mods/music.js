@@ -1,7 +1,7 @@
 {
   music: {
     name: "music",
-    startup: function(client, data) {
+    startup: function(guild, client, data) {
       data.bin.voiceChannel = null;
       data.bin.voiceDispatcher = null;
       data.bin.musicState = 0; // 0 = stopped, 1 = playing, 2 = paused
