@@ -21,21 +21,6 @@
       message.channel.sendMessage(command.params.join(me.seperator), {tts: true});
     }
   },
-  react: {
-    name: "react",
-    runtime: function(message, client) {
-      var command = processCommand(message.content);
-      if (command.params.length < 2) {
-        message.channel.sendMessage("```" + me.prefix + "react [messageid] [emoji]\n\nReacts to a message using an emoji.```");
-        return;
-      }
-      message.channel.fetchMessage(command.params[0]).then(function(message) {
-        message.react(command.params[1]);
-      }).catch(function(error) {
-        message.channel.sendMessage("Message not found.");
-      });
-    }
-  },
   ping: {
     name: "ping",
     runtime: function(message, client) {
