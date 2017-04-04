@@ -1,7 +1,7 @@
 {
   heist: {
     name: "heist",
-    startup: function(client, data) {
+    startup: function(guild, client, data) {
       data.bin.heistCrew = [];
       data.bin.heistLooters = [];
       data.bin.heistJoinMessage = null;
@@ -102,7 +102,7 @@
 
         if (heister.heistStatus === 2) {
           embed.addField("Bail cost", heister.heistBailCost, false);
-        } else if (heister.heistStatus === 3) {
+        } else if (heister.heistStatus === 4) {
           embed.addField("Heal cost", data.data.heistConfig.healCost, false);
         }
 
