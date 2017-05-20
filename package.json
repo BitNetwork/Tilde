@@ -1,0 +1,24 @@
+{
+  "name": "tilde",
+  "version": "0.1.0",
+  "description": "A Discord bot.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BitNetwork/Tilde.git"
+  },
+  "keywords": [
+    "discord",
+    "discord.js",
+    "bot"
+  ],
+  "author": "Bit",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/BitNetwork/Tilde/issues"
+  },
+  "homepage": "https://github.com/BitNetwork/Tilde#readme"
+}
