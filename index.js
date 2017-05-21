@@ -38,6 +38,7 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
     // Properties
     this.name = name;
     this.active = true;
+    this.dm = true;
     this.internal = internal || null;
     this.commands = {};
     this.onready = null;
@@ -52,7 +53,32 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
       return modification.commands[name];
     };
 
-    internal(modification);
+    internal(modification, me);
+
+    client.guilds.forEach(function(guild) {
+      let dataGuild = me.guilds[guild.id];
+
+      if (modification.active === false) {
+        return;
+      }
+
+      if (me.client.readyTimestamp !== null) {
+        modification.onready(dataGuild, modification);
+      }
+    });
+
+    client.channels.filter(function(channel) { return channel.type === "dm"; }).forEach(function(channel) {
+      let dataGuild = me.guilds[channel.id];
+
+      if (modification.active === false || modification.dm === false) {
+        return;
+      }
+
+      if (me.client.readyTimestamp !== null) {
+        modification.onready(dataGuild, modification);
+      }
+    });
+
   };
 
   this.Command = function(name, modification, runtime, options) {
@@ -68,35 +94,45 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
     for (let option in options) {
       command[option] = options[option];
     }
+  };
 
+  this.ProcessedCommand = function(prefix, commandText) {
+    let command = commandText.substring(prefix.length);
+    let options = "";
+    if (command.search(" ") !== -1) { // If the command has options
+      command = commandText.substring(prefix.length, commandText.search(" "));
+      options = commandText.substring(prefix.length + command.length + 1);
+    }
+
+    let params = [""];
+    let currentParam = 0;
+    let inString = false;
+    for (var i = 0; i < options.length; i++) {
+      let char = options[i];
+      if (char === "\"") {
+        inString = !inString;
+        if (inString) {
+          params[currentParam] = "";
+        }
+      } else if (inString) {
+        params[currentParam] += char;
+      } else if (char === " ") {
+        currentParam++;
+        params[currentParam] = "";
+      } else {
+        params[currentParam] += char;
+      }
+    }
+
+    this.prefix = prefix;
+    this.command = command;
+    this.options = options;
+    this.params = params;
   };
 
   // Private methods
   let addGuild = function(id, options) { // Guild creator
     me.guilds[id] = new me.Guild(id, options);
-  };
-
-  let processCommand = function(prefix, commandText) { // Internal command processer
-    let command = commandText.substring(prefix.length).split(" ")[0];
-    let params = commandText.substring(prefix.length + command.length).split(" ").slice(1);
-    let stringParams = commandText.substring(prefix.length + command.length).split("\"");
-
-    if (stringParams.length <= 1) {
-      return {prefix: prefix, command: command, params: params};
-    }
-
-    var i = 0;
-    while (i < stringParams.length) {
-      if (stringParams[i] === " " || stringParams[i] === "") {
-        stringParams.splice(i, 1);
-        i++;
-      } else {
-        stringParams[i] = stringParams[i].trim();
-        i += 2;
-      }
-    }
-
-    return {prefix: prefix, command: command, params: stringParams};
   };
 
   // Methods
@@ -116,57 +152,110 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
     return this;
   };
 
-
   client.on("ready", function() {
     client.guilds.forEach(function(guild) {
       addGuild(guild.id);
+
+      for (let modificationName in me.modifications) {
+        let modification = me.modifications[modificationName];
+        let dataGuild = me.guilds[guild.id];
+
+        if (modification.active === false) {
+          continue;
+        }
+
+        if (modification.onready !== null) {
+          modification.onready(dataGuild, modification);
+        }
+      }
     });
 
     client.channels.filter(function(channel) { return channel.type === "dm"; }).forEach(function(channel) {
-      addGuild(channel.id, {dm: true})
+      addGuild(channel.id, {dm: true});
+
+      for (let modificationName in me.modifications) {
+        let modification = me.modifications[modificationName];
+        let dataGuild = me.guilds[channel.id];
+
+        if (modification.active === false || modification.dm === false) {
+          continue;
+        }
+
+        if (modification.onready !== null) {
+          modification.onready(dataGuild, modification);
+        }
+      }
     });
   });
 
   client.on("channelCreate", function(guild) {
     addGuild(guild.id);
+
+    for (let modificationName in me.modifications) {
+      let modification = me.modifications[modificationName];
+      let guild = me.guilds[guild.id];
+
+      if (modification.active === false) {
+        continue;
+      }
+
+      if (modification.onready !== null) {
+        modification.onready(guild, modification);
+      }
+    }
   });
 
   me.client.on("channelCreate", function(channel) {
     if (channel.type === "dm") {
       addGuild(channel.id, {dm: true});
+
+      for (let modificationName in me.modifications) {
+        let modification = me.modifications[modificationName];
+        let guild = me.guilds[channel.id];
+
+        if (modification.active === false || modification.dm === false) {
+          continue;
+        }
+
+        if (modification.onready !== null) {
+          modification.onready(guild, modification);
+        }
+      }
     }
   });
 
   client.on("message", function(message) {
     let id = message.channel.id; // Either the guild id or the dm/user id
+    let dm = true;
     if (message.guild !== null) {
       id = message.guild.id;
+      dm = false;
     }
 
-    let guild = me.guilds[id]
+    let guild = me.guilds[id];
     let prefix = guild.data.prefix;
 
     if (message.content.substring(0, prefix.length) !== prefix || guild.active === false) {
       return;
     }
 
-    let processedCommand = processCommand(prefix, message.content);
+    let processedCommand = new me.ProcessedCommand(prefix, message.content);
     console.log(processedCommand); // Debug & lazy logging
 
     for (let modificationName in me.modifications) {
       let modification = me.modifications[modificationName];
-      if (modification.active === false) {
+      if (modification.active === false || (dm === true ? !modification.dm : false)) {
         continue;
       }
 
       for (let commandName in modification.commands) {
         let command = modification.commands[commandName];
-        if (command.active === false) {
+        if (command.active === false || (dm === true ? !command.dm : false)) {
           continue;
         }
 
         if (command.name === processedCommand.command && command.runtime !== null) {
-          command.runtime(guild, command, processedCommand); // This is ugly... might make it look prettier later... maybe... someday.
+          command.runtime(guild, processedCommand, message); // This is ugly... might make it look prettier later... maybe... someday.
         }
 
       }
