@@ -1,13 +1,13 @@
 const tilde = require(".");
+const path = require("path");
 
 let bot = new tilde();
-bot.addModification("test", function(modification) {
-  console.log("testing...");
-  modification.registerCommand("ping", function() {
-    console.log("pong");
-  });
-});
+
+bot.addModification("core", require(path.join(__dirname, "modifications", "core.js")));
+bot.addModification("music", require(path.join(__dirname, "modifications", "music.js")), {dm: false});
+
 bot.login("MzE1Mjc5NjkzNTg0NzkzNjAw.DAEanQ.OUbdQxZzHqLA9SR-7CoHonekh54");
+
 
 const readline = require("readline").createInterface({
   input: process.stdin,
