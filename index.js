@@ -22,6 +22,7 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
     this.id = id;
     this.active = true;
     this.dm = false;
+    this.members = {};
     this.bin = {}; // Per guild data storage, not saved
     this.data = { // Per guild data storage, must be JSON compatible (object, array, string, number, null), saved to file.
       prefix: me.data.prefix // Per guild prefix, default to global prefix
@@ -30,9 +31,23 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
     for (let option in options) {
       this[option] = options[option];
     }
-  }
+  };
 
-  this.Modification = function(name, internal, options) { // Modification "class"
+  this.Member = function(id, guild, options) {
+    let member = this;
+
+    // Properties
+    this.id = id;
+    this.guild = (guild === undefined ? null : guild);
+    this.bin = {};
+    this.data = {};
+
+    for (let option in options) {
+      this[option] = options[option];
+    }
+  };
+
+  this.Modification = function(name, internal, options) {
     let modification = this;
 
     // Properties
@@ -86,7 +101,7 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
 
     // Properties
     this.name = name;
-    this.modification = (modification === undefined ? null : runtime);
+    this.modification = (modification === undefined ? null : modification);
     this.active = true;
     this.dm = false;
     this.runtime = (runtime === undefined ? null : runtime);
@@ -124,6 +139,10 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
       }
     }
 
+    if (params.length === 1) {
+      params = [];
+    }
+
     this.prefix = prefix;
     this.command = command;
     this.options = options;
@@ -131,8 +150,11 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
   };
 
   // Private methods
-  let addGuild = function(id, options) { // Guild creator
+  let addGuild = function(id, members, options) { // Guild creator
     me.guilds[id] = new me.Guild(id, options);
+    members.forEach(function(member) {
+      me.guilds[id].members[member.id] = new me.Member(member.id, me.guilds[id]);
+    });
   };
 
   // Methods
@@ -154,7 +176,7 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
 
   client.on("ready", function() {
     client.guilds.forEach(function(guild) {
-      addGuild(guild.id);
+      addGuild(guild.id, guild.members.filter(function(member) { return member.id !== client.user.id;}).array());
 
       for (let modificationName in me.modifications) {
         let modification = me.modifications[modificationName];
@@ -171,7 +193,7 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
     });
 
     client.channels.filter(function(channel) { return channel.type === "dm"; }).forEach(function(channel) {
-      addGuild(channel.id, {dm: true});
+      addGuild(channel.id, [channel.recipient], {dm: true});
 
       for (let modificationName in me.modifications) {
         let modification = me.modifications[modificationName];
@@ -188,26 +210,9 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
     });
   });
 
-  client.on("channelCreate", function(guild) {
-    addGuild(guild.id);
-
-    for (let modificationName in me.modifications) {
-      let modification = me.modifications[modificationName];
-      let guild = me.guilds[guild.id];
-
-      if (modification.active === false) {
-        continue;
-      }
-
-      if (modification.onready !== null) {
-        modification.onready(guild, modification);
-      }
-    }
-  });
-
   me.client.on("channelCreate", function(channel) {
     if (channel.type === "dm") {
-      addGuild(channel.id, {dm: true});
+      addGuild(channel.id, [channel.recipient], {dm: true});
 
       for (let modificationName in me.modifications) {
         let modification = me.modifications[modificationName];

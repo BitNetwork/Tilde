@@ -36,7 +36,7 @@ module.exports = function(modification, bot) {
     }
 
     if (command.params.length === 0) {
-      message.channel.send("```" + prefix + "play [yt video]\n\nPlays a song in your connected voice channel.```");
+      message.channel.send("```" + command.prefix + "play [yt video]\n\nPlays a song in your connected voice channel.```");
       return;
     }
 
