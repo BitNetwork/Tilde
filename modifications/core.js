@@ -1,6 +1,8 @@
 module.exports = function(modification, bot) {
 
-  modification.registerCommand("help", function(guild, command, message) {
+  modification.registerCommand("help", function(member, command, message) {
+    let guild = member.guild;
+
     let newMessage = "";
     for (let modificationName in bot.modifications) {
       let modificationLoop = bot.modifications[modificationName];
@@ -23,7 +25,7 @@ module.exports = function(modification, bot) {
     message.channel.send(newMessage);
   }, {dm: true});
 
-  modification.registerCommand("echo", function(guild, command, message) {
+  modification.registerCommand("echo", function(member, command, message) {
     if (command.params.length < 1) {
       message.channel.send("```" + command.prefix + "echo [text]\n\nEchos text back to chat.```");
       return;
@@ -31,7 +33,7 @@ module.exports = function(modification, bot) {
     message.channel.send(command.params.join(" "));
   }, {dm: true});
 
-  modification.registerCommand("tts", function(guild, command, message) {
+  modification.registerCommand("tts", function(member, command, message) {
     if (command.params.length < 1) {
       message.channel.send("```" + command.prefix + "tts [text]\n\nSpeaks text back to chat using text-to-speech.```");
       return;
@@ -39,15 +41,15 @@ module.exports = function(modification, bot) {
     message.channel.send(command.params.join(" "), {tts: true});
   });
 
-  modification.registerCommand("invite", function(guild, command, message) {
+  modification.registerCommand("invite", function(member, command, message) {
     message.channel.send("Offical guild: https://discord.gg/Uzkx7jr");
   }, {dm: true});
 
-  modification.registerCommand("github", function(guild, command, message) {
+  modification.registerCommand("github", function(member, command, message) {
     message.channel.send("Github repository: https://github.com/BitNetwork/tilde");
   }, {dm: true});
 
-  modification.registerCommand("ping", function(guild, command, message) {
+  modification.registerCommand("ping", function(member, command, message) {
     let incomingPing = Date.now() - message.createdTimestamp;
     let outgoingPing = Date.now();
     message.channel.send("Pong!\nIncoming: " + incomingPing + "ms").then(function(createdMessage) {
@@ -56,7 +58,7 @@ module.exports = function(modification, bot) {
     });
   }, {dm: true});
 
-  modification.registerCommand("pong", function(guild, command, message) {
+  modification.registerCommand("pong", function(member, command, message) {
     let incomingPing = Date.now() - message.createdTimestamp;
     let outgoingPing = Date.now();
     message.channel.send("Ping!\nIncoming: " + incomingPing + "ms").then(function(createdMessage) {

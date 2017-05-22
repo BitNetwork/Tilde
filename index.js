@@ -31,6 +31,12 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
     for (let option in options) {
       this[option] = options[option];
     }
+
+    // Methods
+    this.registerMember = function(id, options) {
+      guild.members[id] = new me.Member(id, guild, options);
+      return guild.members[id];
+    };
   };
 
   this.Member = function(id, guild, options) {
@@ -78,7 +84,7 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
       }
 
       if (me.client.readyTimestamp !== null) {
-        modification.onready(dataGuild, modification);
+        modification.onready(dataGuild);
       }
     });
 
@@ -90,7 +96,7 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
       }
 
       if (me.client.readyTimestamp !== null) {
-        modification.onready(dataGuild, modification);
+        modification.onready(dataGuild);
       }
     });
 
@@ -139,7 +145,7 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
       }
     }
 
-    if (params.length === 1) {
+    if (params.length === 1 && params[0] === "") {
       params = [];
     }
 
@@ -153,7 +159,8 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
   let addGuild = function(id, members, options) { // Guild creator
     me.guilds[id] = new me.Guild(id, options);
     members.forEach(function(member) {
-      me.guilds[id].members[member.id] = new me.Member(member.id, me.guilds[id]);
+      // me.guilds[id].members[member.id] = new me.Member(member.id, me.guilds[id]);
+      me.guilds[id].registerMember(member.id);
     });
   };
 
@@ -187,7 +194,7 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
         }
 
         if (modification.onready !== null) {
-          modification.onready(dataGuild, modification);
+          modification.onready(dataGuild);
         }
       }
     });
@@ -204,7 +211,7 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
         }
 
         if (modification.onready !== null) {
-          modification.onready(dataGuild, modification);
+          modification.onready(dataGuild);
         }
       }
     });
@@ -229,6 +236,13 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
     }
   });
 
+  client.on("guildMemberAdd", function(member) {
+    let guild = me.guilds[member.guild.id];
+    if (guild.members[member.id] === undefined) {
+      let member = guild.registerMember(member.id, member.guild);
+    }
+  });
+
   client.on("message", function(message) {
     let id = message.channel.id; // Either the guild id or the dm/user id
     let dm = true;
@@ -238,6 +252,7 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
     }
 
     let guild = me.guilds[id];
+    let member = guild.members[message.author.id];
     let prefix = guild.data.prefix;
 
     if (message.content.substring(0, prefix.length) !== prefix || guild.active === false) {
@@ -260,7 +275,7 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
         }
 
         if (command.name === processedCommand.command && command.runtime !== null) {
-          command.runtime(guild, processedCommand, message); // This is ugly... might make it look prettier later... maybe... someday.
+          command.runtime(member, processedCommand, message); // This is ugly... might make it look prettier later... maybe... someday.
         }
 
       }

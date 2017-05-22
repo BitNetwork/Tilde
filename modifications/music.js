@@ -2,7 +2,7 @@ module.exports = function(modification, bot) {
   const ytdl = require("ytdl-core");
   const discordjs = require("discord.js");
 
-  modification.onready = function(guild, modification) {
+  modification.onready = function(guild) {
     guild.bin.voiceChannel = null;
     guild.bin.voiceDispatcher = null;
     guild.bin.musicState = 0; // 0 = stopped, 1 = playing, 2 = paused
@@ -11,7 +11,8 @@ module.exports = function(modification, bot) {
     guild.bin.playingMusic = null;
   };
 
-  modification.registerCommand("join", function(guild, command, message) {
+  modification.registerCommand("join", function(member, command, message) {
+    let guild = member.guild;
     if (typeof message.member.voiceChannel === "undefined") {
       message.channel.send("You don't appear to be in a voice channel.");
       return;
@@ -22,7 +23,8 @@ module.exports = function(modification, bot) {
     });
   });
 
-  modification.registerCommand("play", function(guild, command, message) {
+  modification.registerCommand("play", function(member, command, message) {
+    let guild = member.guild;
     if (guild.bin.musicState === 2) {
       guild.bin.voiceDispatcher.resume();
       guild.bin.musicState = 1;
@@ -83,7 +85,8 @@ module.exports = function(modification, bot) {
     });
   });
 
-  modification.registerCommand("pause", function(guild, command, message) {
+  modification.registerCommand("pause", function(member, command, message) {
+    let guild = member.guild;
     if (guild.bin.musicState === 0) {
       message.channel.send("There's no music playing.");
       return;
@@ -99,7 +102,8 @@ module.exports = function(modification, bot) {
     message.channel.send("Music paused.");
   });
 
-  modification.registerCommand("stop", function(guild, command, message) {
+  modification.registerCommand("stop", function(member, command, message) {
+    let guild = member.guild;
     if (guild.bin.musicState === 0) {
       message.channel.send("There's no music playing.");
       return;
@@ -111,20 +115,23 @@ module.exports = function(modification, bot) {
     message.channel.send("Music stopped.");
   });
 
-  modification.registerCommand("leave", function(guild, command, message) {
+  modification.registerCommand("leave", function(member, command, message) {
+    let guild = member.guild;
     if (guild.bin.voiceChannel === null) {
       message.channel.send("I'm not in a voice channel.");
       return;
     }
+
+    guild.bin.voiceChannel.disconnect();
     guild.bin.playingMusic = null;
     guild.bin.voiceDispatcher = null;
-    guild.bin.voiceChannel.disconnect();
     guild.bin.voiceChannel = null;
     guild.bin.musicState = 0;
     message.channel.send("I left the voice channel.");
   });
 
-  modification.registerCommand("volume", function(guild, command, message) {
+  modification.registerCommand("volume", function(member, command, message) {
+    let guild = member.guild;
     function help() {
       message.channel.send("```" + command.prefix + "volume [dial | gain] [1-10 | 0-200]\n\nAdjusts the volume of the current music.```");
     }
@@ -193,7 +200,8 @@ module.exports = function(modification, bot) {
     }
   });
 
-  modification.registerCommand("song", function(guild, command, message) {
+  modification.registerCommand("song", function(member, command, message) {
+    let guild = member.guild;
     if (guild.bin.musicState === 0) {
       message.channel.send("There's no music playing.");
       return;
