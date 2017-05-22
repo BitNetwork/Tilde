@@ -16,7 +16,7 @@ bot.addModification("debug", function(modification, bot) {
 
 });
 
-bot.login("MjY4MjMwNjYzMDI1NTkwMjc0.C1sojA.tmLZPrM8DTogi6Ww1PUEpJpjwV8");
+bot.login("");
 
 
 const readline = require("readline").createInterface({
