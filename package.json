@@ -1,0 +1,30 @@
+{
+  "name": "tilde-bot",
+  "version": "1.0.0",
+  "description": "Tilde is a multi-server multi-function discord bot with expandable modifications.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node test.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "discord.js": "*",
+    "node-opus": "*",
+    "opusscript": "*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bitnetwork/tilde-bot.git"
+  },
+  "keywords": [
+    "discord",
+    "discord.js",
+    "bot"
+  ],
+  "author": "Bit",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bitnetwork/tilde-bot/issues"
+  },
+  "homepage": "https://github.com/bitnetwork/tilde-bot#readme"
+}
