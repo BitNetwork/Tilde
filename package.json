@@ -1,15 +1,20 @@
 {
-  "name": "tilde",
-  "version": "0.1.0",
-  "description": "A Discord bot.",
+  "name": "tilde-bot",
+  "version": "1.0.0",
+  "description": "Tilde is a multi-server multi-function discord bot with expandable modifications.",
   "main": "index.js",
   "scripts": {
-    "start": "npm install discord.js node-opus ytdl-core && node test.js",
+    "start": "node test.js",
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "discord.js": "*",
+    "node-opus": "*",
+    "opusscript": "*"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/BitNetwork/Tilde.git"
+    "url": "git+https://github.com/bitnetwork/tilde-bot.git"
   },
   "keywords": [
     "discord",
@@ -19,7 +24,7 @@
   "author": "Bit",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/BitNetwork/Tilde/issues"
+    "url": "https://github.com/bitnetwork/tilde-bot/issues"
   },
-  "homepage": "https://github.com/BitNetwork/Tilde#readme"
+  "homepage": "https://github.com/bitnetwork/tilde-bot#readme"
 }

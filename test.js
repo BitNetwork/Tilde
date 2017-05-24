@@ -16,7 +16,7 @@ bot.addModification("debug", function(modification, bot) {
 
 });
 
-bot.login("");
+bot.login("token");
 
 
 const readline = require("readline").createInterface({

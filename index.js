@@ -1,6 +1,6 @@
 const discordjs = require("discord.js");
 
-module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. EDIT: Lol nope scratch that shit. There's no private variables.
+module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. EDIT: Lol nope scratch that shit. There's no private variables in them.
   let client = new discordjs.Client();
   let me = this;
 
@@ -11,7 +11,7 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
   this.guilds = {};
   this.bin = {}; // Global bot data storage, not saved
   this.data = { // Global bot data storage, must be JSON compatible (object, array, string, number, null), saved to file.
-    prefix: "~"
+    prefix: "~" // Default prefix right here
   };
 
   // Classes

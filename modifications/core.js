@@ -46,7 +46,7 @@ module.exports = function(modification, bot) {
   }, {dm: true});
 
   modification.registerCommand("github", function(member, command, message) {
-    message.channel.send("Github repository: https://github.com/BitNetwork/tilde");
+    message.channel.send("Github repository: https://github.com/bitnetwork/tilde-bot");
   }, {dm: true});
 
   modification.registerCommand("ping", function(member, command, message) {
