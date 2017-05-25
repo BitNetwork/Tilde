@@ -2,14 +2,14 @@ module.exports = function(modification, bot) {
   const ytdl = require("ytdl-core");
   const discordjs = require("discord.js");
 
-  modification.onready = function(guild) {
+  modification.on("ready", function(guild) {
     guild.bin.voiceChannel = null;
     guild.bin.voiceDispatcher = null;
     guild.bin.musicState = 0; // 0 = stopped, 1 = playing, 2 = paused
     guild.bin.musicVolume = 1;
     guild.bin.musicMuted = false;
     guild.bin.playingMusic = null;
-  };
+  });
 
   modification.registerCommand("join", function(member, command, message) {
     let guild = member.guild;
@@ -148,7 +148,7 @@ module.exports = function(modification, bot) {
 
     let amount = 0;
     if (command.params[0].match(/^\d+$/) !== null) {
-      amount = Math.round(parseInt(command.params[0]));
+      amount = Math.round(parseInt(command.params[0], 10));
 
       if (amount < 1 || amount > 10) {
         message.channel.send("That number isn't on my dial.");
@@ -164,7 +164,7 @@ module.exports = function(modification, bot) {
       guild.bin.voiceDispatcher.setVolume(amount * 0.2);
       message.channel.send("Set the dial to " + amount + ".");
     } else if (command.params[0] === "dial" && command.params.length > 1 && command.params[1].match(/^\d+$/) !== null) {
-      amount = Math.round(parseInt(command.params[1]));
+      amount = Math.round(parseInt(command.params[1], 10));
 
       if (amount < 1 || amount > 10) {
         message.channel.send("That number isn't on my dial.");
@@ -180,7 +180,7 @@ module.exports = function(modification, bot) {
       guild.bin.voiceDispatcher.setVolume(amount * 0.2);
       message.channel.send("Set the dial to " + amount + ".");
     } else if (command.params[0] === "gain" && command.params.length > 1 && command.params[1].match(/^\d+$/) !== null) {
-      amount = Math.round(parseInt(command.params[1]));
+      amount = Math.round(parseInt(command.params[1], 10));
 
       if (amount < 1 || amount > 200) {
         message.channel.send("That number is too loud.");

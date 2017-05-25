@@ -19,7 +19,7 @@ module.exports = function(modification, bot) {
 
         newMessage += command.prefix + commandLoop.name + "\n";
       }
-      newMessage += "\n\n";
+      newMessage += "\n";
     }
     newMessage = newMessage.substring(0, newMessage.length - 2);
     message.channel.send(newMessage);

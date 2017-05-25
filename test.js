@@ -1,10 +1,13 @@
 const tilde = require(".");
 const path = require("path");
+const fs = require("fs");
 
 let bot = new tilde();
 
 bot.addModification("core", require(path.join(__dirname, "modifications", "core.js")));
 bot.addModification("music", require(path.join(__dirname, "modifications", "music.js")), {dm: false});
+bot.addModification("minigames", require(path.join(__dirname, "modifications", "minigames.js")));
+bot.addModification("mafia", require(path.join(__dirname, "modifications", "minigames.js")));
 
 bot.addModification("debug", function(modification, bot) {
 
@@ -16,7 +19,7 @@ bot.addModification("debug", function(modification, bot) {
 
 });
 
-bot.login("token");
+bot.login(fs.readFileSync(path.join(__dirname, "token"), "utf-8"));
 
 
 const readline = require("readline").createInterface({
