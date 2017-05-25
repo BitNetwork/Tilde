@@ -20,7 +20,6 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
 
     // Properties
     this.id = id;
-    this.active = true;
     this.dm = false;
     this.members = {};
     this.bin = {}; // Per guild data storage, not saved
@@ -58,7 +57,6 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
 
     // Properties
     this.name = name;
-    this.active = true;
     this.dm = true;
     this.internal = internal || null;
     this.commands = {};
@@ -74,14 +72,15 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
       return modification.commands[name];
     };
 
+    this.on = function(name, internal) {
+      modification["on" + name] = internal;
+      return modification["on" + name];
+    };
+
     internal(modification, me);
 
     client.guilds.forEach(function(guild) {
       let dataGuild = me.guilds[guild.id];
-
-      if (modification.active === false) {
-        return;
-      }
 
       if (me.client.readyTimestamp !== null) {
         modification.onready(dataGuild);
@@ -91,7 +90,7 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
     client.channels.filter(function(channel) { return channel.type === "dm"; }).forEach(function(channel) {
       let dataGuild = me.guilds[channel.id];
 
-      if (modification.active === false || modification.dm === false) {
+      if (modification.dm === false) {
         return;
       }
 
@@ -108,7 +107,6 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
     // Properties
     this.name = name;
     this.modification = (modification === undefined ? null : modification);
-    this.active = true;
     this.dm = false;
     this.runtime = (runtime === undefined ? null : runtime);
 
@@ -189,10 +187,6 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
         let modification = me.modifications[modificationName];
         let dataGuild = me.guilds[guild.id];
 
-        if (modification.active === false) {
-          continue;
-        }
-
         if (modification.onready !== null) {
           modification.onready(dataGuild);
         }
@@ -206,7 +200,7 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
         let modification = me.modifications[modificationName];
         let dataGuild = me.guilds[channel.id];
 
-        if (modification.active === false || modification.dm === false) {
+        if (modification.dm === false) {
           continue;
         }
 
@@ -225,7 +219,7 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
         let modification = me.modifications[modificationName];
         let guild = me.guilds[channel.id];
 
-        if (modification.active === false || modification.dm === false) {
+        if ( modification.dm === false) {
           continue;
         }
 
@@ -255,7 +249,8 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
     let member = guild.members[message.author.id];
     let prefix = guild.data.prefix;
 
-    if (message.content.substring(0, prefix.length) !== prefix || guild.active === false) {
+    // https://cdn.discordapp.com/attachments/267126130039848970/317349504208601089/Screenshot_20170525-111211-01.jpg
+    if (message.content.substring(0, prefix.length) !== prefix || guild.active === false || message.author.id === client.user.id) {
       return;
     }
 

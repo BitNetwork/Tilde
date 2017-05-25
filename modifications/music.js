@@ -2,14 +2,14 @@ module.exports = function(modification, bot) {
   const ytdl = require("ytdl-core");
   const discordjs = require("discord.js");
 
-  modification.onready = function(guild) {
+  modification.on("ready", function(guild) {
     guild.bin.voiceChannel = null;
     guild.bin.voiceDispatcher = null;
     guild.bin.musicState = 0; // 0 = stopped, 1 = playing, 2 = paused
     guild.bin.musicVolume = 1;
     guild.bin.musicMuted = false;
     guild.bin.playingMusic = null;
-  };
+  });
 
   modification.registerCommand("join", function(member, command, message) {
     let guild = member.guild;
