@@ -233,7 +233,7 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
   client.on("guildMemberAdd", function(member) {
     let guild = me.guilds[member.guild.id];
     if (guild.members[member.id] === undefined) {
-      let member = guild.registerMember(member.id, member.guild);
+      guild.registerMember(member.id, member.guild);
     }
   });
 
