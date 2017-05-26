@@ -5,6 +5,7 @@ const fs = require("fs");
 let bot = new tilde();
 
 bot.addModification("core", require(path.join(__dirname, "modifications", "core.js")));
+bot.addModification("admin", require(path.join(__dirname, "modifications", "admin.js")), {dm: false});
 bot.addModification("music", require(path.join(__dirname, "modifications", "music.js")), {dm: false});
 bot.addModification("minigames", require(path.join(__dirname, "modifications", "minigames.js")));
 bot.addModification("mafia", require(path.join(__dirname, "modifications", "mafia.js")), {dm: false});

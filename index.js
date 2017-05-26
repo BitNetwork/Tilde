@@ -115,6 +115,7 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
     }
   };
 
+  // Bug within ProcessedCommand: long option doesn't work without paramater (ex: ~prefix --default)
   this.ProcessedCommand = function(prefix, commandText) {
     let command = commandText.substring(prefix.length);
     let options = "";
