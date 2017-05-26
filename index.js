@@ -124,23 +124,66 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
     }
 
     let params = [""];
+    let switches = {};
+    let inSwitch = 0;
+    let currentSwitch = "";
     let currentParam = 0;
     let inString = false;
     for (var i = 0; i < options.length; i++) {
       let char = options[i];
-      if (char === "\"") {
+
+      if (inSwitch > 0) {
+        if (char === "-" && inSwitch === 1 && currentSwitch === "") {
+          inSwitch++;
+        } else if (char === "-" && inString === false) {
+          inSwitch = 1;
+          currentSwitch = "";
+        } else if (char === " " && inSwitch === 3 && switches[currentSwitch] !== "" && inString === false) {
+          inSwitch = 0;
+          currentSwitch = "";
+        } else if ((char === " " && inSwitch === 3 && switches[currentSwitch] === "") || (char === " " && inSwitch === 2)) {
+          inSwitch = 3;
+          switches[currentSwitch] = "";
+        } else if (inSwitch === 1) {
+          currentSwitch = char;
+          inSwitch = 3;
+          switches[currentSwitch] = "";
+        } else if (inSwitch === 2) {
+          currentSwitch += char;
+        } else if (char === "\"") {
+          inString = !inString;
+          if (inString) {
+            params[currentParam] = "";
+          } else {
+            inSwitch = 0;
+            currentSwitch = "";
+          }
+        } else if (inSwitch === 3) {
+          if (inString) {
+            switches[currentSwitch] += char;
+          } else {
+            switches[currentSwitch] += char;
+          }
+        }
+      } else if (char === "\"") {
         inString = !inString;
         if (inString) {
+          params[currentParam] = "";
+        } else {
+          currentParam++;
           params[currentParam] = "";
         }
       } else if (inString) {
         params[currentParam] += char;
+      } else if (char === "-") {
+      	inSwitch++;
       } else if (char === " ") {
         currentParam++;
         params[currentParam] = "";
       } else {
         params[currentParam] += char;
       }
+
     }
 
     if (params.length === 1 && params[0] === "") {
@@ -151,6 +194,7 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
     this.command = command;
     this.options = options;
     this.params = params;
+    this.switches = switches;
   };
 
   // Private methods

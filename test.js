@@ -11,6 +11,10 @@ bot.addModification("mafia", require(path.join(__dirname, "modifications", "mafi
 
 bot.addModification("debug", function(modification, bot) {
 
+  modification.registerCommand("command", function(member, command, message) {
+    message.channel.send(`\`\`\`json\n${JSON.stringify(command)}\`\`\``);
+  }, {dm: true});
+
   modification.registerCommand("data", function(member, command, message) {
     message.channel.send(`Guild user data: ${JSON.stringify(member.data)}`);
     message.channel.send(`Guild data: ${JSON.stringify(member.guild.data)}`);
