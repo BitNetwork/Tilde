@@ -322,7 +322,7 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
     let prefix = guild.data.prefix;
 
     // https://cdn.discordapp.com/attachments/267126130039848970/317349504208601089/Screenshot_20170525-111211-01.jpg
-    if (message.content.substring(0, prefix.length) !== prefix || guild.active === false || message.author.id === client.user.id || message.author.bot) {
+    if (message.content.substring(0, prefix.length) !== prefix || message.author.id === client.user.id || message.author.bot) {
       return;
     }
 
@@ -331,13 +331,13 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
 
     for (let modificationName in me.modifications) {
       let modification = me.modifications[modificationName];
-      if (modification.active === false || (dm === true ? !modification.dm : false)) {
+      if (dm === true ? !modification.dm : false) {
         continue;
       }
 
       for (let commandName in modification.commands) {
         let command = modification.commands[commandName];
-        if (command.active === false || (dm === true ? !command.dm : false)) {
+        if (dm === true ? !command.dm : false) {
           continue;
         }
 
