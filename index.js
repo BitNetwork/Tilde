@@ -129,13 +129,21 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
     let inSwitch = 0;
     let currentSwitch = "";
     let currentParam = 0;
+    let currentParamText = "";
     let inString = false;
-    for (var i = 0; i < options.length; i++) {
+    let lastChar = false;
+    for (let i = 0; i < options.length; i++) {
       let char = options[i];
+      if (i + 1 >= options.length) {
+        lastChar = true;
+      }
 
       if (inSwitch > 0) {
         if (char === "-" && inSwitch === 1 && currentSwitch === "") {
           inSwitch++;
+        } else if (lastChar === true && inSwitch === 2) {
+          switches[currentSwitch + char] = "";
+          inSwitch = 3;
         } else if (char === "-" && inString === false) {
           inSwitch = 1;
           currentSwitch = "";
@@ -154,36 +162,35 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
         } else if (char === "\"") {
           inString = !inString;
           if (inString) {
-            params[currentParam] = "";
+            switches[currentSwitch] = "";
           } else {
             inSwitch = 0;
             currentSwitch = "";
           }
         } else if (inSwitch === 3) {
-          if (inString) {
-            switches[currentSwitch] += char;
-          } else {
-            switches[currentSwitch] += char;
-          }
+          switches[currentSwitch] += char;
         }
       } else if (char === "\"") {
         inString = !inString;
         if (inString) {
-          params[currentParam] = "";
-        } else {
-          currentParam++;
-          params[currentParam] = "";
+          currentParamText = "";
         }
       } else if (inString) {
-        params[currentParam] += char;
+        currentParamText += char;
       } else if (char === "-") {
-      	inSwitch++;
+        inSwitch++;
       } else if (char === " ") {
+        if (currentParamText === "") {
+          continue;
+        }
+        params[currentParam] = currentParamText;
         currentParam++;
-        params[currentParam] = "";
+        currentParamText = "";
       } else {
-        params[currentParam] += char;
+        currentParamText += char;
       }
+
+      console.log({char: char, params: params, switches: switches, inSwitch: inSwitch, currentSwitch: currentSwitch, currentParam: currentParam, inString: inString, lastChar: lastChar});
 
     }
 
