@@ -5,6 +5,7 @@ const fs = require("fs");
 let bot = new tilde();
 
 bot.addModification("core", require(path.join(__dirname, "modifications", "core.js")));
+bot.addModification("utilities", require(path.join(__dirname, "modifications", "utilities.js")));
 bot.addModification("admin", require(path.join(__dirname, "modifications", "admin.js")), {dm: false});
 bot.addModification("music", require(path.join(__dirname, "modifications", "music.js")), {dm: false});
 bot.addModification("minigames", require(path.join(__dirname, "modifications", "minigames.js")));
@@ -39,3 +40,5 @@ readline.on("line", function(line) {
     console.log(error);
   }
 });
+
+process.on("unhandledRejection", console.error);

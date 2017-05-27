@@ -17,11 +17,14 @@ module.exports = function(modification, bot) {
       guild.data.prefix = command.params[0];
       message.channel.send(`Prefix set to ${command.params[0]}.`);
     } else {
-      help()
+      help();
     }
   });
 
   modification.registerCommand("export", function(member, command, message) {
+    let guild = member.guild;
+    let data = JSON.stringify(guild.data);
 
+    message.channel.sendFile((new Buffer(data)), "export.json");
   });
 };

@@ -170,6 +170,10 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
         } else if (inSwitch === 3) {
           switches[currentSwitch] += char;
         }
+      } else if (char === "\"" && lastChar) {
+        params[currentParam] = currentParamText;
+        currentParam++;
+        currentParamText = "";
       } else if (char === "\"") {
         inString = !inString;
         if (inString) {
@@ -180,17 +184,19 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
       } else if (char === "-") {
         inSwitch++;
       } else if (char === " ") {
-        if (currentParamText === "") {
-          continue;
+        if (currentParamText !== "") {
+          params[currentParam] = currentParamText;
+          currentParam++;
+          currentParamText = "";
         }
+      } else if (lastChar) {
+        currentParamText += char;
         params[currentParam] = currentParamText;
         currentParam++;
         currentParamText = "";
       } else {
         currentParamText += char;
       }
-
-      console.log({char: char, params: params, switches: switches, inSwitch: inSwitch, currentSwitch: currentSwitch, currentParam: currentParam, inString: inString, lastChar: lastChar});
 
     }
 
@@ -263,7 +269,21 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
     });
   });
 
-  me.client.on("channelCreate", function(channel) {
+  client.on("guildCreate", function(guild) {
+    console.log(guild);
+    addGuild(guild.id, guild.members.array());
+
+    for (let modificationName in me.modifications) {
+      let modification = me.modifications[modificationName];
+      let guildData = me.guilds[guild.id];
+
+      if (modification.onready !== null) {
+        modification.onready(guildData, modification);
+      }
+    }
+  });
+
+  client.on("channelCreate", function(channel) {
     if (channel.type === "dm") {
       addGuild(channel.id, [channel.recipient], {dm: true});
 
@@ -302,7 +322,7 @@ module.exports = function tilde() { // Oh yeah baby, that's right, ES6 classes. 
     let prefix = guild.data.prefix;
 
     // https://cdn.discordapp.com/attachments/267126130039848970/317349504208601089/Screenshot_20170525-111211-01.jpg
-    if (message.content.substring(0, prefix.length) !== prefix || guild.active === false || message.author.id === client.user.id) {
+    if (message.content.substring(0, prefix.length) !== prefix || guild.active === false || message.author.id === client.user.id || message.author.bot) {
       return;
     }
 
