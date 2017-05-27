@@ -2,7 +2,7 @@ module.exports = function(modification, bot) {
   modification.registerCommand("prefix", function(member, command, message) {
     let guild = member.guild;
     function help() {
-      message.channel.send(`\`\`\`${guild.data.prefix}prefix [prefix] [-h --help] [-d --default] [-e --empty]\nChanges the bot prefix.\nprefix | new prefix\n-h --help | shows this help text\n-d --default | change to default prefix\n-e --empty | change to empty prefix.\`\`\``);
+      message.channel.send(`\`\`\`${guild.data.prefix}prefix [prefix] [-h --help] [-d --default] [-e --empty]\nChanges the bot prefix.\nprefix | new prefix\n-h --help | shows this help text\n-d --default | change to default prefix\n-e --empty | change to empty prefix\`\`\``);
     }
 
     if (command.switches["h"] !== undefined || command.switches["help"] !== undefined) {

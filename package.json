@@ -8,9 +8,12 @@
     "test": "node test.js"
   },
   "dependencies": {
-    "discord.js": "*",
+    "discord.js": "*"
+  },
+  "optionalDependencies": {
     "node-opus": "*",
-    "opusscript": "*"
+    "opusscript": "*",
+    "cleverbot.io": "*"
   },
   "repository": {
     "type": "git",
