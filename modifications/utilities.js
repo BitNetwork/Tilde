@@ -10,4 +10,12 @@ module.exports = function(modification, bot) {
   modification.registerCommand("unflip", function(member, command, message) {
     message.channel.send("\u252C\u2500\u252C\uFEFF \u30CE( \u309C-\u309C\u30CE)");
   }, {dm: true});
+
+  modification.registerCommand("google", function(member, command, message) {
+    if (command.params.length < 1) {
+      message.channel.send(`\`\`\`${member.guild.prefix}google [query]\nPerforms a search on google.\nquery | search text\`\`\``);
+      return;
+    }
+    message.channel.send("https:\/\/google.com/search?q=" + encodeURIComponent(command.params.join(" ")));
+  }, {dm: true});
 };
