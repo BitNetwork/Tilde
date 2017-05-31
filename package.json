@@ -11,6 +11,7 @@
     "discord.js": "*"
   },
   "optionalDependencies": {
+    "ytdl-core": "*",
     "node-opus": "*",
     "opusscript": "*",
     "cleverbot.io": "*"
