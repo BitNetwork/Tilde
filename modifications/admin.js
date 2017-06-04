@@ -21,6 +21,40 @@ module.exports = function(modification, bot) {
     }
   });
 
+  modification.on("ready", function(guild) {
+    guild.data.adblock = false;
+  });
+
+  modification.registerCommand("adblock", function(member, command, message) {
+    let guild = member.guild;
+    function help() {
+      message.channel.send(`\`\`\`${guild.data.prefix}adblock [-h --help] [--on] [--off]\nChanges the status of adblock.\n-h --help | shows this help text\n--on | enable the adblocker\n--off | disable the adblocker\`\`\``);
+    }
+
+    if (command.switches["h"] !== undefined || command.switches["help"] !== undefined) {
+      help();
+    } else if (command.switches["on"] !== undefined) {
+      guild.data.adblock = true;
+      message.channel.send("Adblock enabled.");
+    } else if (command.switches["off"] !== undefined) {
+      guild.data.adblock = false;
+      message.channel.send("Adblock disabled.");
+    } else {
+      help();
+    }
+  });
+
+  bot.client.on("message", function(message) {
+    if (bot.guilds[message.guild.id].data.adblock && message.content.search(/discord\.gg\/[^]*/) !== -1) {
+      console.log("a");
+      if (message.deletable) {
+        message.delete().then(function(message) {
+          message.channel.send("No advertising.");
+        });
+      }
+    }
+  });
+
   modification.registerCommand("export", function(member, command, message) {
     let guild = member.guild;
     let data = JSON.stringify(guild.data);
